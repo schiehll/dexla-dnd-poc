@@ -96,6 +96,7 @@ export const DroppableDraggable = ({
   const Child = () => {
     return (
       <>
+        {/* @ts-ignore */}
         {children?.children}
         {selectedId === id && (
           <Group h={20} top={-20} left={0} noWrap pos="absolute" spacing="xs">

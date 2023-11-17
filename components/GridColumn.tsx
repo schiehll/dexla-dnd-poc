@@ -1,13 +1,14 @@
 import { useEditorStore } from "@/stores/editor";
 import { GRID_SIZE } from "@/utils/config";
 import { updateTreeComponentProps } from "@/utils/editor";
-import { Box } from "@mantine/core";
+import { Box, useMantineTheme } from "@mantine/core";
 import cloneDeep from "lodash.clonedeep";
 import { PropsWithChildren, forwardRef, useEffect, useState } from "react";
 
 export const GridColumn = forwardRef(
   ({ children, style, span, ...props }: PropsWithChildren<any>, ref) => {
     const [columnSize, setColumnSize] = useState(span);
+    const theme = useMantineTheme();
     const setIsResizing = useEditorStore((state) => state.setIsResizing);
     const tree = useEditorStore((state) => state.tree);
     const setTree = useEditorStore((state) => state.setTree);
@@ -18,17 +19,16 @@ export const GridColumn = forwardRef(
       setTree(copy);
     }, [columnSize]);
 
-    console.log({ columnSize });
-
     return (
       <>
         <Box
           ref={ref}
           p="xs"
-          bg="blue.3"
+          display="grid"
           style={{
             ...(style ?? {}),
             gridColumn: `span ${columnSize}`,
+            gap: theme.spacing.xs,
           }}
           pos="relative"
           {...props}
