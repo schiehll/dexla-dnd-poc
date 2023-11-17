@@ -113,33 +113,34 @@ export const DroppableDraggable = ({
                 {component.type}
               </Text>
             </Box>
-            {/* {component.type === "Grid" && (
-          <Button
-            color="green"
-            size="xs"
-            compact
-            onClick={() => {
-              const copy = cloneDeep(tree);
-              const childs = (component.children ?? [])
-                .concat({ ...schema, id: nanoid() })
-                .map((child) => {
-                  return {
-                    ...child,
-                    props: {
-                      ...child.props,
-                      span: Math.floor(
-                        GRID_SIZE / ((component.children?.length ?? 1) + 1)
-                      ),
-                    },
-                  };
-                });
-              updateTreeComponentChildren(copy, id, childs);
-              setTree(copy);
-            }}
-          >
-            Add Column
-          </Button>
-        )} */}
+            {component.type === "Grid" && (
+              <Button
+                color="green"
+                size="xs"
+                compact
+                onClick={() => {
+                  const copy = cloneDeep(tree);
+                  const childs = (component.children ?? [])
+                    .concat({ ...schema, id: nanoid() })
+                    .map((child) => {
+                      return {
+                        ...child,
+                        props: {
+                          ...child.props,
+                          span: Math.floor(
+                            component.props.gridSize /
+                              ((component.children?.length ?? 1) + 1)
+                          ),
+                        },
+                      };
+                    });
+                  updateTreeComponentChildren(copy, id, childs);
+                  setTree(copy);
+                }}
+              >
+                Add Column
+              </Button>
+            )}
           </Group>
         )}
       </>
