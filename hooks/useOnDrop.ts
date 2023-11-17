@@ -12,7 +12,10 @@ import {
   moveComponentToDifferentParent,
   removeComponent,
   removeComponentFromParent,
+  updateTreeComponentProps,
 } from "@/utils/editor";
+import { schemaMapper } from "@/utils/componentMapper";
+import { GRID_SIZE } from "@/utils/config";
 
 export const useOnDrop = () => {
   const editorTree = useEditorStore((state) => state.tree);
@@ -64,7 +67,49 @@ export const useOnDrop = () => {
   ) {
     const targetParent = getComponentParent(copy, dropTarget.id);
     if (!targetComponent?.blockDroppingChildrenInside) {
-      console.log("adding component", { componentToAdd, dropTarget });
+      const dropTargetComponent = getComponentById(copy, dropTarget.id);
+      const componentToAddCopy = schemaMapper[componentToAdd.type];
+      if (
+        componentToAddCopy.type === "Grid" &&
+        dropTargetComponent.type === "GridColumn"
+      ) {
+        const size = GRID_SIZE;
+        const childSpan = GRID_SIZE / 2;
+        const parentSpan = dropTargetComponent.props.span;
+        // calculate new size which should be proportional to the parentSpan, for example:
+        // if the parent span is 6 and the grid size is 12, the new size should be porportional to 6/12
+        const newSize = parentSpan;
+        const newSpan =
+          parentSpan === size ? childSpan : (childSpan * newSize) / size;
+
+        console.log({
+          componentToAddCopy,
+          dropTargetComponent,
+          size,
+          parentSpan,
+          childSpan,
+          newSize,
+          newSpan,
+        });
+
+        componentToAdd.props = {
+          ...componentToAdd.props,
+          gridSize: newSize,
+        };
+
+        componentToAdd.children = componentToAdd.children.map((child) => {
+          return {
+            ...child,
+            props: {
+              ...child.props,
+              span: newSpan,
+            },
+          };
+        });
+      }
+
+      console.log({ componentToAdd });
+
       const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
 
       /* if (dropTarget.edge !== "center") {

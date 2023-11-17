@@ -4,11 +4,8 @@ import { Component } from "@/utils/editor";
 import { Box, Flex, Stack, Text, useMantineTheme } from "@mantine/core";
 import { schema as ContainerSchema } from "@/components/schemas/Container";
 import { schema as GridSchema } from "@/components/schemas/Grid";
-import { useId } from "react";
 
-const Item = ({ data }: { data: Component }) => {
-  const id = useId();
-
+const Item = ({ id, data }: { data: Component; id: string }) => {
   return (
     <Draggable id={id} data={data} isDeletable={false}>
       <Flex justify="center" align="center">
@@ -29,8 +26,8 @@ export default function Home() {
         p="md"
         sx={{ borderRight: `1px solid ${theme.colors.gray[3]}` }}
       >
-        <Item data={ContainerSchema} />
-        <Item data={GridSchema} />
+        <Item id="Container" data={ContainerSchema} />
+        <Item id="Grid" data={GridSchema} />
       </Stack>
       <Box m={40} w={`calc(100vw - 200px)`}>
         <Editor />

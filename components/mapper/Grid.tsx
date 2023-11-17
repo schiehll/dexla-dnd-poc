@@ -44,8 +44,6 @@ export const Grid = forwardRef(
       });
     }, [updatedSize, component.children]); */
 
-    console.log({ children, child: component.children });
-
     return (
       <Box
         display="grid"

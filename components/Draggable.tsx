@@ -25,6 +25,7 @@ export const Draggable = ({
     id,
     onDragStart: (id: string) => {
       setSelectedId(id);
+      console.log({ data });
       setComponentToAdd(data);
     },
   });
