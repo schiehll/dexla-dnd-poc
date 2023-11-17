@@ -71,10 +71,12 @@ export const useOnDrop = () => {
       const componentToAddCopy = schemaMapper[componentToAdd.type];
       if (
         componentToAddCopy.type === "Grid" &&
+        // @ts-ignore
         dropTargetComponent.type === "GridColumn"
       ) {
         const size = GRID_SIZE;
         const childSpan = GRID_SIZE / 2;
+        // @ts-ignore
         const parentSpan = dropTargetComponent.props.span;
         // calculate new size which should be proportional to the parentSpan, for example:
         // if the parent span is 6 and the grid size is 12, the new size should be porportional to 6/12
@@ -97,6 +99,7 @@ export const useOnDrop = () => {
           gridSize: newSize,
         };
 
+        // @ts-ignore
         componentToAdd.children = componentToAdd.children.map((child) => {
           return {
             ...child,

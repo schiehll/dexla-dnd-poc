@@ -128,6 +128,7 @@ export const DroppableDraggable = ({
                         props: {
                           ...child.props,
                           span: Math.floor(
+                            // @ts-ignore
                             component.props.gridSize /
                               ((component.children?.length ?? 1) + 1)
                           ),
