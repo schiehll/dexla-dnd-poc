@@ -92,6 +92,27 @@ export const getComponentParent = (
   return parent;
 };
 
+export const getComponentNextSibiling = (
+  treeRoot: Component,
+  id: string
+): Component | null => {
+  let parent: Component | null = null;
+  let sibiling: Component | null = null;
+  crawl(
+    treeRoot,
+    (node, context) => {
+      if (node.id === id) {
+        parent = context.parent;
+        sibiling = parent?.children?.[context.index + 1] as Component;
+        context.break();
+      }
+    },
+    { order: "bfs" }
+  );
+
+  return sibiling;
+};
+
 export const getComponentById = (
   treeRoot: Component,
   id: string
