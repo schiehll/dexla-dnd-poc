@@ -232,3 +232,40 @@ export const removeComponent = (treeRoot: Component, id: string) => {
     { order: "bfs" }
   );
 };
+
+export const updateTreeComponentChildren = (
+  treeRoot: Component,
+  id: string,
+  children: Component[]
+) => {
+  crawl(
+    treeRoot,
+    (node, context) => {
+      if (node.id === id) {
+        node.children = children;
+        context.break();
+      }
+    },
+    { order: "bfs" }
+  );
+};
+
+export const updateTreeComponentProps = (
+  treeRoot: Component,
+  id: string,
+  props: { [key: string]: any }
+) => {
+  crawl(
+    treeRoot,
+    (node, context) => {
+      if (node.id === id) {
+        node.props = {
+          ...node.props,
+          ...props,
+        };
+        context.break();
+      }
+    },
+    { order: "bfs" }
+  );
+};

@@ -1,4 +1,10 @@
-import { Component, removeComponent } from "@/utils/editor";
+import {
+  Component,
+  getComponentById,
+  getComponentParent,
+  removeComponent,
+  updateTreeComponentChildren,
+} from "@/utils/editor";
 import { Droppable } from "./Droppable";
 import { Paper } from "@mantine/core";
 import { componentMapper } from "@/utils/componentMapper";
@@ -7,6 +13,8 @@ import { DroppableDraggable } from "./DroppableDraggable";
 import { useHotkeys } from "@mantine/hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useCallback } from "react";
+import { GRID_SIZE } from "@/utils/config";
+import { Grid } from "./mapper/Grid";
 
 export const Editor = () => {
   const tree = useEditorStore((state) => state.tree);
@@ -18,7 +26,23 @@ export const Editor = () => {
     if (selectedComponentId) {
       const copy = cloneDeep(tree);
 
+      const comp = getComponentById(copy, selectedComponentId);
+      const parent = getComponentParent(copy, selectedComponentId);
       removeComponent(copy, selectedComponentId);
+
+      if (comp?.type === "GridColumn") {
+        const childs = (parent?.children ?? [])?.map((child) => {
+          return {
+            ...child,
+            props: {
+              ...child.props,
+              span: Math.floor(GRID_SIZE / (parent?.children?.length ?? 1)),
+            },
+          };
+        });
+        updateTreeComponentChildren(copy, parent?.id!, childs);
+      }
+
       setEditorTree(copy);
       setSelectedId(undefined);
     }
@@ -33,7 +57,7 @@ export const Editor = () => {
     if (component.id === "root") {
       return (
         <Droppable id={component.id} m={0} p={2}>
-          <Paper shadow="xs" bg="gray.0" display="flex" mih="200px" p="lg">
+          <Paper shadow="xs" bg="gray.0" display="flex" mih="200px">
             {component.children?.map((child) => renderTree(child))}
           </Paper>
         </Droppable>

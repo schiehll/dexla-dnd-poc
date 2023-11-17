@@ -1,13 +1,14 @@
+import { GRID_SIZE } from "@/utils/config";
 import { nanoid } from "nanoid";
 
 export const schema = {
   id: nanoid(),
   type: "Grid",
   props: {
-    gutter: "md",
     bg: "white",
     m: 0,
     p: "xs",
+    gridSize: GRID_SIZE,
     style: {
       width: "100%",
       height: "auto",
@@ -20,7 +21,7 @@ export const schema = {
       id: nanoid(),
       type: "GridColumn",
       props: {
-        span: 6,
+        span: GRID_SIZE / 2,
         bg: "white",
         style: {
           height: "auto",
@@ -33,7 +34,7 @@ export const schema = {
       id: nanoid(),
       type: "GridColumn",
       props: {
-        span: 6,
+        span: GRID_SIZE / 2,
         bg: "white",
         style: {
           height: "auto",

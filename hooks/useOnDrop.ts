@@ -20,9 +20,11 @@ export const useOnDrop = () => {
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
   const setComponentToAdd = useEditorStore((state) => state.setComponentToAdd);
   const componentToAdd = useEditorStore((state) => state.componentToAdd);
+  const isResizing = useEditorStore((state) => state.isResizing);
 
   const onDrop = useCallback(
     (_droppedId: string, dropTarget: DropTarget) => {
+      if (isResizing) return;
       const droppedId = _droppedId ?? componentToAdd?.id;
       const copy = cloneDeep(editorTree);
       const activeComponent = getComponentById(copy, droppedId);
@@ -39,6 +41,7 @@ export const useOnDrop = () => {
       } else {
         handleRootDrop(copy, droppedId, activeComponent, dropTarget);
       }
+
       setEditorTree(copy);
     },
     [
@@ -48,6 +51,7 @@ export const useOnDrop = () => {
       handleComponentAddition,
       handleReorderingOrMoving,
       handleRootDrop,
+      isResizing,
     ]
   );
 
