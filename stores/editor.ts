@@ -29,13 +29,12 @@ export const useEditorStore = create<EditorState>((set) => ({
         props: {
           bg: "white",
           m: 0,
-          p: "xs",
+          p: 0,
           gridSize: GRID_SIZE,
           style: {
             width: "100%",
             height: "auto",
             minHeight: "50px",
-            border: "2px dotted #ddd",
           },
         },
         children: [

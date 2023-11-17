@@ -48,13 +48,13 @@ export const DroppableDraggable = ({
     },
   });
 
-  const { edge, ...droppable } = useDroppable({
+  const { edge = "center", ...droppable } = useDroppable({
     id,
     activeId: selectedId,
     onDrop,
   });
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (elRef.current && draggableRef.current) {
       // @ts-ignore
       const elRect = elRef.current.getBoundingClientRect();
@@ -67,7 +67,7 @@ export const DroppableDraggable = ({
       // @ts-ignore
       draggableRef.current.style.left = `${left}px`;
     }
-  }, [selectedId, id]);
+  }, [selectedId, id]); */
 
   const baseShadow = `0 0 0 2px ${theme.colors.green[6]}`;
   const DROP_INDICATOR_WIDTH = 3;
@@ -93,52 +93,60 @@ export const DroppableDraggable = ({
     ? { boxShadow: baseShadow }
     : {};
 
-  return (
-    <>
-      {selectedId === id && (
-        <Group h={20} ref={draggableRef} noWrap pos="absolute" spacing="xs">
-          <Box
-            h={20}
-            bg="green"
-            {...draggable}
-            px={10}
-            sx={{
-              cursor: "move",
-            }}
-          >
-            <Text size="xs" color="white">
-              {component.type}
-            </Text>
-          </Box>
-          {/* {component.type === "Grid" && (
-            <Button
-              color="green"
-              size="xs"
-              compact
-              onClick={() => {
-                const copy = cloneDeep(tree);
-                const childs = (component.children ?? [])
-                  .concat({ ...schema, id: nanoid() })
-                  .map((child) => {
-                    return {
-                      ...child,
-                      props: {
-                        ...child.props,
-                        span: Math.floor(
-                          GRID_SIZE / ((component.children?.length ?? 1) + 1)
-                        ),
-                      },
-                    };
-                  });
-                updateTreeComponentChildren(copy, id, childs);
-                setTree(copy);
+  const Child = () => {
+    return (
+      <>
+        {children?.children}
+        {selectedId === id && (
+          <Group h={20} top={-20} left={0} noWrap pos="absolute" spacing="xs">
+            <Box
+              h={20}
+              bg="green"
+              {...draggable}
+              px={10}
+              sx={{
+                cursor: "move",
               }}
             >
-              Add Column
-            </Button>
-          )} */}
-        </Group>
-      )}
+              <Text size="xs" color="white">
+                {component.type}
+              </Text>
+            </Box>
+            {/* {component.type === "Grid" && (
+          <Button
+            color="green"
+            size="xs"
+            compact
+            onClick={() => {
+              const copy = cloneDeep(tree);
+              const childs = (component.children ?? [])
+                .concat({ ...schema, id: nanoid() })
+                .map((child) => {
+                  return {
+                    ...child,
+                    props: {
+                      ...child.props,
+                      span: Math.floor(
+                        GRID_SIZE / ((component.children?.length ?? 1) + 1)
+                      ),
+                    },
+                  };
+                });
+              updateTreeComponentChildren(copy, id, childs);
+              setTree(copy);
+            }}
+          >
+            Add Column
+          </Button>
+        )} */}
+          </Group>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <>
       {cloneElement(
         // @ts-ignore
         children,
@@ -147,6 +155,7 @@ export const DroppableDraggable = ({
           component,
           ...droppable,
           ...props,
+          pos: "relative",
           style: {
             ...props.style,
             ...(component.props?.style ?? {}),
@@ -159,8 +168,7 @@ export const DroppableDraggable = ({
             setSelectedId(id);
           },
         },
-        // @ts-ignore
-        children?.children
+        Child()
       )}
     </>
   );

@@ -70,9 +70,10 @@ export const GridColumn = forwardRef(
         {...props}
         id={component.id}
       >
-        {component.children && component.children.length > 0
-          ? component.children?.map((child: any) => renderTree(child))
-          : children}
+        {children}
+        {component.children &&
+          component.children.length > 0 &&
+          component.children?.map((child: any) => renderTree(child))}
       </GridColumnComponent>
     );
   }

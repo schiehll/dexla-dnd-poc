@@ -44,6 +44,8 @@ export const Grid = forwardRef(
       });
     }, [updatedSize, component.children]); */
 
+    console.log({ children, child: component.children });
+
     return (
       <Box
         display="grid"
@@ -51,15 +53,18 @@ export const Grid = forwardRef(
         {...component.props}
         {...props}
         id={component.id}
+        pos="relative"
         style={{
+          ...props.style,
           ...style,
           gap: theme.spacing.xs,
           gridTemplateColumns: `repeat(${gridSize ?? GRID_SIZE}, 1fr)`,
         }}
       >
-        {component.children && component.children.length > 0
-          ? component.children?.map((child: Component) => renderTree(child))
-          : children}
+        {children}
+        {component.children &&
+          component.children.length > 0 &&
+          component.children?.map((child: Component) => renderTree(child))}
       </Box>
     );
   }

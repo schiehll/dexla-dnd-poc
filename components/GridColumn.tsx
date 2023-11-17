@@ -18,6 +18,8 @@ export const GridColumn = forwardRef(
       setTree(copy);
     }, [columnSize]);
 
+    console.log({ columnSize });
+
     return (
       <>
         <Box
