@@ -11,11 +11,10 @@ import {
   Text,
   useMantineTheme,
 } from "@mantine/core";
-import { PropsWithChildren, cloneElement, useEffect, useRef } from "react";
+import { PropsWithChildren, cloneElement, useRef } from "react";
 import { schema } from "./schemas/GridColumn";
 import { nanoid } from "nanoid";
 import cloneDeep from "lodash.clonedeep";
-import { GRID_SIZE } from "@/utils/config";
 
 type Props = {
   id: string;
@@ -30,7 +29,6 @@ export const DroppableDraggable = ({
 }: PropsWithChildren<Props>) => {
   const theme = useMantineTheme();
   const elRef = useRef(null);
-  const draggableRef = useRef(null);
   const selectedId = useEditorStore((state) => state.selectedId);
   const currentTargetId = useEditorStore((state) => state.currentTargetId);
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
@@ -54,23 +52,8 @@ export const DroppableDraggable = ({
     onDrop,
   });
 
-  /* useEffect(() => {
-    if (elRef.current && draggableRef.current) {
-      // @ts-ignore
-      const elRect = elRef.current.getBoundingClientRect();
-
-      const top = elRect.top;
-      const left = elRect.left;
-
-      // @ts-ignore
-      draggableRef.current.style.top = `${top - 20}px`;
-      // @ts-ignore
-      draggableRef.current.style.left = `${left}px`;
-    }
-  }, [selectedId, id]); */
-
   const baseShadow = `0 0 0 2px ${theme.colors.green[6]}`;
-  const DROP_INDICATOR_WIDTH = 3;
+  const DROP_INDICATOR_WIDTH = 6;
   const isOver = currentTargetId === id && !isResizing;
   const isSelected = selectedId === id && !isResizing;
 
@@ -78,13 +61,13 @@ export const DroppableDraggable = ({
     ? {
         boxShadow:
           edge === "top"
-            ? `inset 0 ${DROP_INDICATOR_WIDTH}px 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
+            ? `0 -${DROP_INDICATOR_WIDTH}px 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
             : edge === "bottom"
-            ? `inset 0 -${DROP_INDICATOR_WIDTH}px 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
+            ? `0 ${DROP_INDICATOR_WIDTH}px 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
             : edge === "left"
-            ? `inset ${DROP_INDICATOR_WIDTH}px 0 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
+            ? `-${DROP_INDICATOR_WIDTH}px 0 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
             : edge === "right"
-            ? `inset -${DROP_INDICATOR_WIDTH}px 0 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
+            ? `${DROP_INDICATOR_WIDTH}px 0 0 0 ${theme.colors.teal[6]}, ${baseShadow}`
             : baseShadow,
         background: edge === "center" ? theme.colors.teal[6] : "none",
         opacity: edge === "center" ? 0.4 : 1,

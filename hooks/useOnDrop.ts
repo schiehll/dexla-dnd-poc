@@ -14,7 +14,7 @@ import {
   removeComponentFromParent,
   updateTreeComponentProps,
 } from "@/utils/editor";
-import { schemaMapper } from "@/utils/componentMapper";
+import { componentMapper, schemaMapper } from "@/utils/componentMapper";
 import { GRID_SIZE } from "@/utils/config";
 
 export const useOnDrop = () => {
@@ -66,9 +66,12 @@ export const useOnDrop = () => {
     componentToAdd: Component
   ) {
     const targetParent = getComponentParent(copy, dropTarget.id);
-    if (!targetComponent?.blockDroppingChildrenInside) {
+    const allowedParentTypes =
+      componentMapper[componentToAdd.type].allowedParentTypes;
+    if (allowedParentTypes?.includes(targetComponent?.type as string)) {
       const dropTargetComponent = getComponentById(copy, dropTarget.id);
       const componentToAddCopy = schemaMapper[componentToAdd.type];
+
       if (
         componentToAddCopy.type === "Grid" &&
         // @ts-ignore
@@ -83,16 +86,6 @@ export const useOnDrop = () => {
         const newSize = parentSpan;
         const newSpan =
           parentSpan === size ? childSpan : (childSpan * newSize) / size;
-
-        console.log({
-          componentToAddCopy,
-          dropTargetComponent,
-          size,
-          parentSpan,
-          childSpan,
-          newSize,
-          newSpan,
-        });
 
         componentToAdd.props = {
           ...componentToAdd.props,
@@ -111,8 +104,6 @@ export const useOnDrop = () => {
         });
       }
 
-      console.log({ componentToAdd });
-
       const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
 
       /* if (dropTarget.edge !== "center") {
@@ -126,20 +117,11 @@ export const useOnDrop = () => {
 
       setSelectedId(newSelectedId);
     } else {
-      if (targetParent) {
-        const dropTargetIndex = getComponentIndex(targetParent, dropTarget.id);
-
-        const newSelectedId = addComponent(
-          copy,
-          componentToAdd,
-          {
-            id: targetParent.id as string,
-            edge: dropTarget.edge,
-          },
-          ["right", "bottom"].includes(dropTarget.edge)
-            ? dropTargetIndex + 1
-            : dropTargetIndex
-        );
+      if (targetParent && allowedParentTypes?.includes(targetParent.type)) {
+        const newSelectedId = addComponent(copy, componentToAdd, {
+          id: targetParent.id as string,
+          edge: dropTarget.edge,
+        });
         setSelectedId(newSelectedId);
       }
     }
@@ -158,10 +140,14 @@ export const useOnDrop = () => {
       return;
     }
 
+    const activeComponent = getComponentById(copy, droppedId);
     const activeParent = getComponentParent(copy, droppedId);
     const targetParent = getComponentParent(copy, dropTarget.id);
+    const allowedParentTypes =
+      componentMapper[activeComponent?.type as string].allowedParentTypes;
+
     if (
-      targetComponent?.blockDroppingChildrenInside &&
+      !allowedParentTypes?.includes(targetComponent?.type as string) &&
       activeParent?.id === targetParent?.id
     ) {
       moveComponent(copy, droppedId, dropTarget);

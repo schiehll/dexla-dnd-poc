@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import crawl from "tree-crawl";
 import cloneDeep from "lodash.clonedeep";
+import { GRID_SIZE } from "./config";
 
 export type Component = {
   id?: string;
@@ -54,7 +55,173 @@ export const addComponent = (
       if (node.id === dropTarget.id) {
         node.children = node.children ?? [];
 
-        if (dropTarget.edge === "left" || dropTarget.edge === "top") {
+        const parent = context.parent as Component;
+
+        const size = GRID_SIZE;
+        // @ts-ignore
+        const parentSpan = parent.props.gridSize ?? size;
+        const childSpan = GRID_SIZE / ((parent.children ?? []).length + 1);
+        // calculate new size which should be proportional to the parentSpan, for example:
+        // if the parent span is 6 and the grid size is 12, the new size should be porportional to 6/12
+        const newSize = parentSpan;
+        const newSpan =
+          parentSpan === size ? childSpan : (childSpan * newSize) / size;
+
+        // if dropTarget.edge is left or right add a new GridColumn and add the component to it
+        // if dropTarget.edge is top or bottom add a new Grid with a GridColumn child and add the component to it
+        // if dropTarget.edge is center add the component to the parent
+        if (dropTarget.edge === "left") {
+          const grid = {
+            id: nanoid(),
+            type: "GridColumn",
+            props: {
+              span: newSpan,
+              bg: "white",
+              style: {
+                height: "auto",
+                minHeight: "50px",
+                border: "2px dotted #ddd",
+              },
+            },
+            children: [copy],
+          } as Component;
+
+          parent.children?.splice(
+            dropIndex ?? context.index - 1 < 0 ? 0 : context.index - 1,
+            0,
+            grid
+          );
+
+          parent.children?.forEach((child) => {
+            if (child.type === "GridColumn") {
+              child.props.span = newSpan;
+            }
+          });
+        } else if (dropTarget.edge === "right") {
+          const grid = {
+            id: nanoid(),
+            type: "GridColumn",
+            props: {
+              span: newSpan,
+              bg: "white",
+              style: {
+                height: "auto",
+                minHeight: "50px",
+                border: "2px dotted #ddd",
+              },
+            },
+            children: [copy],
+          } as Component;
+
+          parent.children?.splice(dropIndex ?? context.index + 1, 0, grid);
+
+          parent.children?.forEach((child) => {
+            if (child.type === "GridColumn") {
+              child.props.span = newSpan;
+            }
+          });
+        } else if (dropTarget.edge === "top") {
+          const grid = {
+            id: nanoid(),
+            type: "Grid",
+            props: {
+              bg: "white",
+              m: 0,
+              p: 0,
+              gridSize: parentSpan,
+              style: {
+                width: "100%",
+                height: "auto",
+                minHeight: "50px",
+              },
+            },
+            children: [
+              {
+                id: nanoid(),
+                type: "GridColumn",
+                props: {
+                  span: parentSpan,
+                  bg: "white",
+                  style: {
+                    height: "auto",
+                    minHeight: "50px",
+                    border: "2px dotted #ddd",
+                  },
+                },
+                children: [copy],
+              },
+            ],
+          } as Component;
+
+          let target = parent;
+          if (node.type === "GridColumn") {
+            target = getComponentParent(treeRoot, parent.id);
+            dropIndex = getComponentIndex(target, parent.id);
+            dropIndex = dropIndex === -1 ? 0 : dropIndex;
+          }
+
+          target.children?.splice(
+            dropIndex ?? context.index - 1 < 0 ? 0 : context.index - 1,
+            0,
+            grid
+          );
+
+          target.children?.forEach((child) => {
+            if (child.type === "GridColumn") {
+              child.props.span = newSpan;
+            }
+          });
+        } else if (dropTarget.edge === "bottom") {
+          const grid = {
+            id: nanoid(),
+            type: "Grid",
+            props: {
+              bg: "white",
+              m: 0,
+              p: 0,
+              gridSize: parentSpan,
+              style: {
+                width: "100%",
+                height: "auto",
+                minHeight: "50px",
+              },
+            },
+            children: [
+              {
+                id: nanoid(),
+                type: "GridColumn",
+                props: {
+                  span: parentSpan,
+                  bg: "white",
+                  style: {
+                    height: "auto",
+                    minHeight: "50px",
+                    border: "2px dotted #ddd",
+                  },
+                },
+                children: [copy],
+              },
+            ],
+          } as Component;
+
+          let target = parent;
+          if (node.type === "GridColumn") {
+            target = getComponentParent(treeRoot, parent.id);
+            dropIndex = getComponentIndex(target, parent.id) + 1;
+          }
+
+          target.children?.splice(dropIndex ?? context.index + 1, 0, grid);
+
+          target.children?.forEach((child) => {
+            if (child.type === "GridColumn") {
+              child.props.span = newSpan;
+            }
+          });
+        } else if (dropTarget.edge === "center") {
+          node.children = [...(node.children || []), copy];
+        }
+
+        /* if (dropTarget.edge === "left" || dropTarget.edge === "top") {
           const index = dropIndex ?? context.index - 1;
           node.children.splice(index, 0, copy);
         } else if (["right", "bottom"].includes(dropTarget.edge)) {
@@ -62,7 +229,7 @@ export const addComponent = (
           node.children.splice(index, 0, copy);
         } else if (dropTarget.edge === "center") {
           node.children = [...(node.children || []), copy];
-        }
+        } */
 
         context.break();
       }
@@ -96,14 +263,12 @@ export const getComponentNextSibiling = (
   treeRoot: Component,
   id: string
 ): Component | null => {
-  let parent: Component | null = null;
   let sibiling: Component | null = null;
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === id) {
-        parent = context.parent;
-        sibiling = parent?.children?.[context.index + 1] as Component;
+        sibiling = context.parent?.children?.[context.index + 1] as Component;
         context.break();
       }
     },
@@ -144,6 +309,7 @@ export const moveComponent = (
   id: string,
   dropTarget: DropTarget
 ) => {
+  console.log("move component");
   crawl(
     treeRoot,
     (node, context) => {
@@ -184,6 +350,7 @@ export const moveComponentToDifferentParent = (
   dropTarget: DropTarget,
   newParentId: string
 ) => {
+  console.log("move component to different parent");
   const _componentToAdd = getComponentById(treeRoot, id) as Component;
   const componentToAdd = cloneDeep(_componentToAdd);
 

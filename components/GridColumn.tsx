@@ -6,6 +6,7 @@ import {
   updateTreeComponentProps,
 } from "@/utils/editor";
 import { Box, useMantineTheme } from "@mantine/core";
+import { useDidUpdate } from "@mantine/hooks";
 import cloneDeep from "lodash.clonedeep";
 import { PropsWithChildren, forwardRef, useEffect, useState } from "react";
 
@@ -17,9 +18,17 @@ export const GridColumn = forwardRef(
     const tree = useEditorStore((state) => state.tree);
     const setTree = useEditorStore((state) => state.setTree);
 
-    useEffect(() => {
+    useDidUpdate(() => {
       const copy = cloneDeep(tree);
       updateTreeComponentProps(copy, props.id, { span: columnSize });
+      const nextSibiling = getComponentNextSibiling(copy, props.id);
+      // update sibling width span
+      if (nextSibiling) {
+        const nextSibilingSpan = nextSibiling.props.span;
+        updateTreeComponentProps(copy, nextSibiling.id, {
+          span: nextSibilingSpan + (span - columnSize),
+        });
+      }
       setTree(copy);
     }, [columnSize]);
 

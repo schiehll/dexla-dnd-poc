@@ -8,6 +8,7 @@ import { schema as GridColumnSchema } from "@/components/schemas/GridColumn";
 
 export type ComponentDefinition = {
   Component: any;
+  allowedParentTypes?: string[];
 };
 
 export type ComponentMapper = {
@@ -19,18 +20,21 @@ export const componentMapper: ComponentMapper = {
     Component: (props: { component: Component; renderTree: any }) => {
       return <Container {...props} />;
     },
+    allowedParentTypes: ["Container", "Grid", "GridColumn"],
   },
   Grid: {
     Component: (props: { component: Component; renderTree: any }) => {
       // @ts-ignore
       return <Grid {...props} />;
     },
+    allowedParentTypes: ["GridColumn"],
   },
   GridColumn: {
     Component: (props: { component: Component; renderTree: any }) => {
       // @ts-ignore
       return <GridColumn {...props} />;
     },
+    allowedParentTypes: ["Grid"],
   },
 };
 

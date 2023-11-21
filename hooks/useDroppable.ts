@@ -1,4 +1,6 @@
 import { useEditorStore } from "@/stores/editor";
+import { componentMapper } from "@/utils/componentMapper";
+import { getComponentById } from "@/utils/editor";
 import { useCallback, useState } from "react";
 
 export type DropTarget = {
@@ -37,6 +39,7 @@ export const useDroppable = ({
   const setCurrentTargetId = useEditorStore(
     (state) => state.setCurrentTargetId
   );
+  const tree = useEditorStore((state) => state.tree);
   const [edge, setEdge] = useState<Edge>();
 
   const handleDrop = useCallback(
@@ -103,10 +106,26 @@ export const useDroppable = ({
   const handleDragEnter = useCallback(
     (event: any) => {
       event.preventDefault();
-      event.stopPropagation();
-      setCurrentTargetId(id);
+
+      const activeComponent = getComponentById(tree, activeId!);
+      const comp = getComponentById(tree, id);
+
+      console.log({ activeComponent });
+
+      if (
+        activeComponent &&
+        componentMapper[
+          activeComponent?.type as string
+        ].allowedParentTypes?.includes(comp?.type as string)
+      ) {
+        setCurrentTargetId(id);
+        event.stopPropagation();
+      } else if (!activeComponent) {
+        setCurrentTargetId(id);
+        event.stopPropagation();
+      }
     },
-    [setCurrentTargetId, id]
+    [setCurrentTargetId, id, tree]
   );
 
   // TODO: Handle isOver differently to have better ux as currently
