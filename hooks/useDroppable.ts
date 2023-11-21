@@ -110,8 +110,6 @@ export const useDroppable = ({
       const activeComponent = getComponentById(tree, activeId!);
       const comp = getComponentById(tree, id);
 
-      console.log({ activeComponent });
-
       if (
         activeComponent &&
         componentMapper[

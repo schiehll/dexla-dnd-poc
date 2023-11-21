@@ -18,7 +18,7 @@ export const GridColumn = forwardRef(
     const tree = useEditorStore((state) => state.tree);
     const setTree = useEditorStore((state) => state.setTree);
 
-    useDidUpdate(() => {
+    /* useDidUpdate(() => {
       const copy = cloneDeep(tree);
       updateTreeComponentProps(copy, props.id, { span: columnSize });
       const nextSibiling = getComponentNextSibiling(copy, props.id);
@@ -31,7 +31,7 @@ export const GridColumn = forwardRef(
       }
       setTree(copy);
     }, [columnSize]);
-
+ */
     useEffect(() => {
       setColumnSize(span);
     }, [span]);

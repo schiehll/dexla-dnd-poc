@@ -34,7 +34,7 @@ export const componentMapper: ComponentMapper = {
       // @ts-ignore
       return <GridColumn {...props} />;
     },
-    allowedParentTypes: ["Grid"],
+    allowedParentTypes: [],
   },
 };
 

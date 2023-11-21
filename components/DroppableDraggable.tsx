@@ -56,6 +56,7 @@ export const DroppableDraggable = ({
   const DROP_INDICATOR_WIDTH = 6;
   const isOver = currentTargetId === id && !isResizing;
   const isSelected = selectedId === id && !isResizing;
+  const isColumn = component.type === "GridColumn";
 
   const shadows = isOver
     ? {
@@ -86,10 +87,10 @@ export const DroppableDraggable = ({
             <Box
               h={20}
               bg="green"
-              {...draggable}
+              {...(isColumn ? {} : draggable)}
               px={10}
               sx={{
-                cursor: "move",
+                cursor: isColumn ? "default" : "move",
               }}
             >
               <Text size="xs" color="white">

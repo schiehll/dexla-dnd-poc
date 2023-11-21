@@ -49,6 +49,87 @@ export const addComponent = (
   const copy = cloneDeep(componentToAdd);
   replaceIdsDeeply(copy);
 
+  const recalculateGridSize = (
+    targetNode: Component,
+    context: crawl.Context<Component>
+  ) => {
+    const parent = context.parent as Component;
+    const isAddingToSide =
+      dropTarget.edge === "left" || dropTarget.edge === "right";
+    const target = isAddingToSide ? parent : targetNode;
+
+    const size = GRID_SIZE;
+    let childSpan = GRID_SIZE / 2;
+    let targetSpan = target.props?.gridSize ?? target.props?.span;
+    let newSpan =
+      targetSpan === size ? childSpan : (childSpan * targetSpan) / size;
+
+    copy.props = {
+      ...copy.props,
+      gridSize: targetSpan,
+    };
+
+    copy.children?.forEach((child) => {
+      if (child.type === "GridColumn") {
+        child.props!.span = newSpan;
+      }
+    });
+
+    if (dropTarget.edge === "center") {
+      targetNode.children = [...(targetNode.children || []), copy];
+      return;
+    }
+
+    const gridColumn = {
+      id: nanoid(),
+      type: "GridColumn",
+      props: {
+        span: newSpan,
+        bg: "white",
+        style: {
+          height: "auto",
+          minHeight: "50px",
+          border: "2px dotted #ddd",
+        },
+      },
+      children: [copy],
+    } as Component;
+
+    if (dropTarget.edge === "left") {
+      target.children?.splice(
+        dropIndex ?? context.index - 1 < 0 ? 0 : context.index,
+        0,
+        gridColumn
+      );
+    } else if (dropTarget.edge === "right") {
+      target.children?.splice(dropIndex ?? context.index + 1, 0, gridColumn);
+    }
+
+    childSpan = size / target.children.length;
+    targetSpan = target.props?.gridSize ?? target.props?.span;
+    newSpan = targetSpan === size ? childSpan : (childSpan * targetSpan) / size;
+
+    target.children?.forEach((child) => {
+      if (child.type === "GridColumn") {
+        child.props!.span = newSpan;
+      }
+    });
+
+    const newChildSpan =
+      newSpan === size ? newSpan : ((GRID_SIZE / 2) * newSpan) / size;
+
+    copy.props = {
+      ...copy.props,
+      gridSize: newSpan,
+    };
+
+    copy.children?.forEach((child) => {
+      if (child.type === "GridColumn") {
+        child.props!.span = newChildSpan;
+      }
+    });
+  };
+
   crawl(
     treeRoot,
     (node, context) => {
@@ -57,108 +138,26 @@ export const addComponent = (
 
         const parent = context.parent as Component;
 
-        const size = GRID_SIZE;
-        // @ts-ignore
-        const parentSpan = parent.props.gridSize ?? size;
-        const childSpan = GRID_SIZE / ((parent.children ?? []).length + 1);
-        // calculate new size which should be proportional to the parentSpan, for example:
-        // if the parent span is 6 and the grid size is 12, the new size should be porportional to 6/12
-        const newSize = parentSpan;
-        const newSpan =
-          parentSpan === size ? childSpan : (childSpan * newSize) / size;
+        recalculateGridSize(node, context);
 
-        // if dropTarget.edge is left or right add a new GridColumn and add the component to it
-        // if dropTarget.edge is top or bottom add a new Grid with a GridColumn child and add the component to it
-        // if dropTarget.edge is center add the component to the parent
-        if (dropTarget.edge === "left") {
-          const grid = {
-            id: nanoid(),
-            type: "GridColumn",
-            props: {
-              span: newSpan,
-              bg: "white",
-              style: {
-                height: "auto",
-                minHeight: "50px",
-                border: "2px dotted #ddd",
-              },
-            },
-            children: [copy],
-          } as Component;
-
-          parent.children?.splice(
-            dropIndex ?? context.index - 1 < 0 ? 0 : context.index - 1,
-            0,
-            grid
-          );
-
-          parent.children?.forEach((child) => {
-            if (child.type === "GridColumn") {
-              child.props.span = newSpan;
-            }
-          });
-        } else if (dropTarget.edge === "right") {
-          const grid = {
-            id: nanoid(),
-            type: "GridColumn",
-            props: {
-              span: newSpan,
-              bg: "white",
-              style: {
-                height: "auto",
-                minHeight: "50px",
-                border: "2px dotted #ddd",
-              },
-            },
-            children: [copy],
-          } as Component;
-
-          parent.children?.splice(dropIndex ?? context.index + 1, 0, grid);
-
-          parent.children?.forEach((child) => {
-            if (child.type === "GridColumn") {
-              child.props.span = newSpan;
-            }
-          });
-        } else if (dropTarget.edge === "top") {
-          const grid = {
-            id: nanoid(),
-            type: "Grid",
-            props: {
-              bg: "white",
-              m: 0,
-              p: 0,
-              gridSize: parentSpan,
-              style: {
-                width: "100%",
-                height: "auto",
-                minHeight: "50px",
-              },
-            },
-            children: [
-              {
-                id: nanoid(),
-                type: "GridColumn",
-                props: {
-                  span: parentSpan,
-                  bg: "white",
-                  style: {
-                    height: "auto",
-                    minHeight: "50px",
-                    border: "2px dotted #ddd",
-                  },
-                },
-                children: [copy],
-              },
-            ],
-          } as Component;
-
+        if (dropTarget.edge === "top") {
           let target = parent;
           if (node.type === "GridColumn") {
             target = getComponentParent(treeRoot, parent.id);
-            dropIndex = getComponentIndex(target, parent.id);
-            dropIndex = dropIndex === -1 ? 0 : dropIndex;
+            dropIndex = getComponentIndex(target, parent.id) - 1;
           }
+
+          parentSpan = target.props.gridSize ?? size;
+
+          const grid = {
+            ...copy,
+            id: nanoid(),
+            type: "Grid",
+            props: {
+              ...copy.props,
+              gridSize: parentSpan,
+            },
+          } as Component;
 
           target.children?.splice(
             dropIndex ?? context.index - 1 < 0 ? 0 : context.index - 1,
@@ -166,70 +165,49 @@ export const addComponent = (
             grid
           );
 
-          target.children?.forEach((child) => {
+          childSpan = GRID_SIZE / (grid.children?.length ?? 1);
+          newSpan =
+            parentSpan === size ? childSpan : (childSpan * parentSpan) / size;
+
+          console.log({ newSpan, childSpan, parentSpan });
+
+          grid.children?.forEach((child) => {
             if (child.type === "GridColumn") {
               child.props.span = newSpan;
             }
           });
         } else if (dropTarget.edge === "bottom") {
-          const grid = {
-            id: nanoid(),
-            type: "Grid",
-            props: {
-              bg: "white",
-              m: 0,
-              p: 0,
-              gridSize: parentSpan,
-              style: {
-                width: "100%",
-                height: "auto",
-                minHeight: "50px",
-              },
-            },
-            children: [
-              {
-                id: nanoid(),
-                type: "GridColumn",
-                props: {
-                  span: parentSpan,
-                  bg: "white",
-                  style: {
-                    height: "auto",
-                    minHeight: "50px",
-                    border: "2px dotted #ddd",
-                  },
-                },
-                children: [copy],
-              },
-            ],
-          } as Component;
-
           let target = parent;
           if (node.type === "GridColumn") {
             target = getComponentParent(treeRoot, parent.id);
             dropIndex = getComponentIndex(target, parent.id) + 1;
           }
 
-          target.children?.splice(dropIndex ?? context.index + 1, 0, grid);
+          parentSpan = target.props.gridSize ?? size;
 
-          target.children?.forEach((child) => {
+          const grid = {
+            ...copy,
+            id: nanoid(),
+            type: "Grid",
+            props: {
+              ...copy.props,
+              gridSize: parentSpan,
+            },
+          } as Component;
+
+          target.children?.splice(dropIndex ?? context.index + 1, 0, grid);
+          childSpan = GRID_SIZE / (grid.children?.length ?? 1);
+          newSpan =
+            parentSpan === size ? childSpan : (childSpan * parentSpan) / size;
+
+          console.log({ newSpan, childSpan, parentSpan });
+
+          grid.children?.forEach((child) => {
             if (child.type === "GridColumn") {
               child.props.span = newSpan;
             }
           });
-        } else if (dropTarget.edge === "center") {
-          node.children = [...(node.children || []), copy];
         }
-
-        /* if (dropTarget.edge === "left" || dropTarget.edge === "top") {
-          const index = dropIndex ?? context.index - 1;
-          node.children.splice(index, 0, copy);
-        } else if (["right", "bottom"].includes(dropTarget.edge)) {
-          const index = dropIndex ?? context.index + 1;
-          node.children.splice(index, 0, copy);
-        } else if (dropTarget.edge === "center") {
-          node.children = [...(node.children || []), copy];
-        } */
 
         context.break();
       }

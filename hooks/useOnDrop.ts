@@ -72,7 +72,7 @@ export const useOnDrop = () => {
       const dropTargetComponent = getComponentById(copy, dropTarget.id);
       const componentToAddCopy = schemaMapper[componentToAdd.type];
 
-      if (
+      /* if (
         componentToAddCopy.type === "Grid" &&
         // @ts-ignore
         dropTargetComponent.type === "GridColumn"
@@ -102,7 +102,7 @@ export const useOnDrop = () => {
             },
           };
         });
-      }
+      } */
 
       const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
 
