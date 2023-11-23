@@ -1,7 +1,6 @@
 import { useDraggable } from "@/hooks/useDraggable";
 import { useEditorStore } from "@/stores/editor";
 import { Box, BoxProps, Card, Group, useMantineTheme } from "@mantine/core";
-import { nanoid } from "nanoid";
 import { PropsWithChildren } from "react";
 
 type Props = {
@@ -26,7 +25,7 @@ export const Draggable = ({
     id,
     onDragStart: (id: string) => {
       setSelectedId(id);
-      setComponentToAdd({ ...data, id: nanoid() });
+      setComponentToAdd(data);
     },
   });
 

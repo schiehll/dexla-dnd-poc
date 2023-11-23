@@ -3,7 +3,6 @@ import crawl from "tree-crawl";
 import cloneDeep from "lodash.clonedeep";
 import { GRID_SIZE } from "./config";
 import { calculateGridSizes } from "./grid";
-import { tree } from "next/dist/build/templates/app-page";
 
 export type Component = {
   id?: string;
@@ -48,6 +47,8 @@ const addNodeToTarget = (
   copy: Component,
   context: crawl.Context<Component>,
   dropTarget: DropTarget,
+  isMoving?: boolean,
+  forceTarget?: boolean,
   dropIndex?: number
 ) => {
   const parent = context.parent as Component;
@@ -55,7 +56,12 @@ const addNodeToTarget = (
     dropTarget.edge === "left" || dropTarget.edge === "right";
   const isAddingToYAxis =
     dropTarget.edge === "top" || dropTarget.edge === "bottom";
-  let target = isAddingToXAxis || isAddingToYAxis ? parent : targetNode;
+  let target =
+    isAddingToXAxis || isAddingToYAxis
+      ? forceTarget
+        ? targetNode
+        : parent
+      : targetNode;
 
   if (dropTarget.edge === "center") {
     targetNode.children = [...(targetNode.children || []), copy];
@@ -63,23 +69,75 @@ const addNodeToTarget = (
   }
 
   if (dropTarget.edge === "top") {
-    if (targetNode.type === "GridColumn") {
+    if (targetNode.type === "GridColumn" && !forceTarget) {
       target = getComponentParent(treeRoot, parent.id!)!;
       dropIndex = getComponentIndex(target, parent.id!);
     }
 
-    target.children?.splice(dropIndex ?? context.index, 0, copy);
+    if (isMoving) {
+      const dropTargetParent = getComponentParent(treeRoot, dropTarget.id!);
+      const items = (target?.children?.map((c) => c.id) ?? []) as string[];
+      const oldIndex = items.indexOf(copy.id!);
+      let newIndex = items.indexOf(dropTargetParent?.id!);
+
+      if (newIndex > oldIndex) {
+        newIndex = Math.max(newIndex - 1, 0);
+      }
+
+      if (oldIndex !== newIndex) {
+        const newPositions = arrayMove(items, oldIndex, newIndex);
+        target!.children = parent?.children?.sort((a, b) => {
+          const aIndex = newPositions.indexOf(a.id as string);
+          const bIndex = newPositions.indexOf(b.id as string);
+          return aIndex - bIndex;
+        });
+      }
+    } else {
+      let i = dropIndex;
+      if (typeof dropIndex === "undefined") {
+        i = context.index;
+      }
+
+      // @ts-ignore
+      target.children?.splice(i, 0, copy);
+    }
 
     return;
   }
 
   if (dropTarget.edge === "bottom") {
-    if (targetNode.type === "GridColumn") {
+    if (targetNode.type === "GridColumn" && !forceTarget) {
       target = getComponentParent(treeRoot, parent.id!)!;
       dropIndex = getComponentIndex(target, parent.id!) + 1;
     }
 
-    target.children?.splice(dropIndex ?? context.index + 1, 0, copy);
+    if (isMoving) {
+      const dropTargetParent = getComponentParent(treeRoot, dropTarget.id!);
+      const items = (target?.children?.map((c) => c.id) ?? []) as string[];
+      const oldIndex = items.indexOf(copy.id!);
+      let newIndex = items.indexOf(dropTargetParent?.id!);
+
+      if (newIndex < oldIndex) {
+        newIndex = Math.min(newIndex + 1, items.length);
+      }
+
+      if (oldIndex !== newIndex) {
+        const newPositions = arrayMove(items, oldIndex, newIndex);
+        target!.children = parent?.children?.sort((a, b) => {
+          const aIndex = newPositions.indexOf(a.id as string);
+          const bIndex = newPositions.indexOf(b.id as string);
+          return aIndex - bIndex;
+        });
+      }
+    } else {
+      let i = dropIndex;
+      if (typeof dropIndex === "undefined") {
+        i = context.index + 1;
+      }
+
+      target.children?.splice(i!, 0, copy);
+    }
+
     return;
   }
 
@@ -99,13 +157,19 @@ const addNodeToTarget = (
   } as Component;
 
   if (dropTarget.edge === "left") {
-    target.children?.splice(
-      dropIndex ?? context.index - 1 < 0 ? 0 : context.index,
-      0,
-      gridColumn
-    );
+    let i = dropIndex;
+    if (typeof dropIndex === "undefined") {
+      i = context.index - 1 < 0 ? 0 : context.index;
+    }
+    // @ts-ignore
+    target.children?.splice(i, 0, gridColumn);
   } else if (dropTarget.edge === "right") {
-    target.children?.splice(dropIndex ?? context.index + 1, 0, gridColumn);
+    let i = dropIndex;
+    if (typeof dropIndex === "undefined") {
+      i = context.index + 1;
+    }
+    // @ts-ignore
+    target.children?.splice(i, 0, gridColumn);
   }
 };
 
@@ -122,7 +186,16 @@ export const addComponent = (
     treeRoot,
     (node, context) => {
       if (node.id === dropTarget.id) {
-        addNodeToTarget(treeRoot, node, copy, context, dropTarget, dropIndex);
+        addNodeToTarget(
+          treeRoot,
+          node,
+          copy,
+          context,
+          dropTarget,
+          false,
+          false,
+          dropIndex
+        );
         context.break();
       }
     },
@@ -209,7 +282,15 @@ export const moveComponent = (
       if (node.id === id) {
         const isGrid = node.type === "Grid";
         if (isGrid) {
-          addNodeToTarget(treeRoot, context.parent!, node, context, dropTarget);
+          addNodeToTarget(
+            treeRoot,
+            context.parent!,
+            node,
+            context,
+            dropTarget,
+            true,
+            true
+          );
         } else {
           const parent = context.parent;
           const items = (parent?.children?.map((c) => c.id) ?? []) as string[];
@@ -253,8 +334,7 @@ export const moveComponentToDifferentParent = (
   dropTarget: DropTarget,
   newParentId: string
 ) => {
-  const _componentToAdd = getComponentById(treeRoot, id) as Component;
-  let componentToAdd = cloneDeep(_componentToAdd);
+  const componentToAdd = getComponentById(treeRoot, id) as Component;
   const isGrid = componentToAdd.type === "Grid";
 
   crawl(
@@ -262,8 +342,26 @@ export const moveComponentToDifferentParent = (
     (node, context) => {
       if (node.id === newParentId) {
         if (isGrid) {
-          console.log("MOVE COMPONENT TO DIFFERENT PARENT");
-          addNodeToTarget(treeRoot, node, componentToAdd, context, dropTarget);
+          const isHorizontalAxis =
+            dropTarget.edge === "right" || dropTarget.edge === "left";
+          const dropIndex = node.children?.findIndex(
+            (c) => c.id === dropTarget.id
+          ) as number;
+
+          addNodeToTarget(
+            treeRoot,
+            node,
+            componentToAdd,
+            context,
+            dropTarget,
+            false,
+            isHorizontalAxis,
+            isHorizontalAxis
+              ? dropTarget.edge === "right"
+                ? dropIndex + 1
+                : dropIndex
+              : undefined
+          );
         } else {
           if (dropTarget.edge === "left" || dropTarget.edge === "top") {
             const dropIndex = node.children?.findIndex(

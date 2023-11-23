@@ -28,8 +28,10 @@ export const useOnDrop = () => {
       const droppedId = _droppedId ?? componentToAdd?.id;
       const copy = cloneDeep(editorTree);
       const activeComponent = getComponentById(copy, droppedId);
-      const targetComponent = getComponentById(copy, dropTarget.id);
-      if (droppedId && componentToAdd) {
+      let targetComponent = getComponentById(copy, dropTarget.id);
+      const isMoving = !!activeComponent;
+
+      if (!isMoving && droppedId && componentToAdd) {
         handleComponentAddition(
           copy,
           dropTarget,
@@ -37,7 +39,23 @@ export const useOnDrop = () => {
           componentToAdd
         );
       } else if (dropTarget.id !== "root") {
-        handleReorderingOrMoving(copy, droppedId, targetComponent, dropTarget);
+        const isDopopingInVerticalAxis =
+          dropTarget.edge === "top" || dropTarget.edge === "bottom";
+        let useParentInstead = false;
+        if (
+          isMoving &&
+          isDopopingInVerticalAxis &&
+          targetComponent?.type === "GridColumn"
+        ) {
+          useParentInstead = true;
+        }
+        handleReorderingOrMoving(
+          copy,
+          droppedId,
+          targetComponent,
+          dropTarget,
+          useParentInstead
+        );
       } else {
         handleRootDrop(copy, droppedId, activeComponent, dropTarget);
       }
@@ -86,22 +104,22 @@ export const useOnDrop = () => {
     copy: Component,
     droppedId: string,
     targetComponent: Component | null,
-    dropTarget: DropTarget
+    dropTarget: DropTarget,
+    useParentInstead?: boolean
   ) {
     if (dropTarget.id === "root") {
       return;
     }
 
-    const activeComponent = getComponentById(copy, droppedId);
     const activeParent = getComponentParent(copy, droppedId);
-    const targetParent = getComponentParent(copy, dropTarget.id);
-    const allowedParentTypes =
-      componentMapper[activeComponent?.type as string].allowedParentTypes;
+    const targetParent = getComponentParent(copy, targetComponent?.id!);
+    const p = getComponentParent(copy, targetParent?.id!);
 
-    if (
-      !allowedParentTypes?.includes(targetComponent?.type as string) &&
-      activeParent?.id === targetParent?.id
-    ) {
+    const isSameParent = useParentInstead
+      ? activeParent?.id === p?.id
+      : activeParent?.id === targetParent?.id;
+
+    if (isSameParent) {
       moveComponent(copy, droppedId, dropTarget);
     } else {
       let newParentId = targetParent!.id;
