@@ -1,13 +1,5 @@
 import { useEditorStore } from "@/stores/editor";
-import { GRID_SIZE } from "@/utils/config";
-import {
-  getComponentNextSibiling,
-  getComponentParent,
-  updateTreeComponentProps,
-} from "@/utils/editor";
 import { Box, useMantineTheme } from "@mantine/core";
-import { useDidUpdate } from "@mantine/hooks";
-import cloneDeep from "lodash.clonedeep";
 import { PropsWithChildren, forwardRef, useEffect, useState } from "react";
 
 export const GridColumn = forwardRef(
@@ -15,23 +7,7 @@ export const GridColumn = forwardRef(
     const [columnSize, setColumnSize] = useState(span);
     const theme = useMantineTheme();
     const setIsResizing = useEditorStore((state) => state.setIsResizing);
-    const tree = useEditorStore((state) => state.tree);
-    const setTree = useEditorStore((state) => state.setTree);
 
-    /* useDidUpdate(() => {
-      const copy = cloneDeep(tree);
-      updateTreeComponentProps(copy, props.id, { span: columnSize });
-      const nextSibiling = getComponentNextSibiling(copy, props.id);
-      // update sibling width span
-      if (nextSibiling) {
-        const nextSibilingSpan = nextSibiling.props.span;
-        updateTreeComponentProps(copy, nextSibiling.id, {
-          span: nextSibilingSpan + (span - columnSize),
-        });
-      }
-      setTree(copy);
-    }, [columnSize]);
- */
     useEffect(() => {
       setColumnSize(span);
     }, [span]);

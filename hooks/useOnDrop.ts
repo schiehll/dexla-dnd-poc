@@ -6,16 +6,13 @@ import {
   Component,
   addComponent,
   getComponentById,
-  getComponentIndex,
   getComponentParent,
   moveComponent,
   moveComponentToDifferentParent,
   removeComponent,
   removeComponentFromParent,
-  updateTreeComponentProps,
 } from "@/utils/editor";
-import { componentMapper, schemaMapper } from "@/utils/componentMapper";
-import { GRID_SIZE } from "@/utils/config";
+import { componentMapper } from "@/utils/componentMapper";
 
 export const useOnDrop = () => {
   const editorTree = useEditorStore((state) => state.tree);
@@ -69,52 +66,7 @@ export const useOnDrop = () => {
     const allowedParentTypes =
       componentMapper[componentToAdd.type].allowedParentTypes;
     if (allowedParentTypes?.includes(targetComponent?.type as string)) {
-      const dropTargetComponent = getComponentById(copy, dropTarget.id);
-      const componentToAddCopy = schemaMapper[componentToAdd.type];
-
-      /* if (
-        componentToAddCopy.type === "Grid" &&
-        // @ts-ignore
-        dropTargetComponent.type === "GridColumn"
-      ) {
-        const size = GRID_SIZE;
-        const childSpan = GRID_SIZE / 2;
-        // @ts-ignore
-        const parentSpan = dropTargetComponent.props.span;
-        // calculate new size which should be proportional to the parentSpan, for example:
-        // if the parent span is 6 and the grid size is 12, the new size should be porportional to 6/12
-        const newSize = parentSpan;
-        const newSpan =
-          parentSpan === size ? childSpan : (childSpan * newSize) / size;
-
-        componentToAdd.props = {
-          ...componentToAdd.props,
-          gridSize: newSize,
-        };
-
-        // @ts-ignore
-        componentToAdd.children = componentToAdd.children.map((child) => {
-          return {
-            ...child,
-            props: {
-              ...child.props,
-              span: newSpan,
-            },
-          };
-        });
-      } */
-
       const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
-
-      /* if (dropTarget.edge !== "center") {
-        handleReorderingOrMoving(
-          copy,
-          newSelectedId,
-          targetComponent,
-          dropTarget
-        );
-      } */
-
       setSelectedId(newSelectedId);
     } else {
       if (targetParent && allowedParentTypes?.includes(targetParent.type)) {

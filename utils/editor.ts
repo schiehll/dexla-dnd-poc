@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import crawl from "tree-crawl";
 import cloneDeep from "lodash.clonedeep";
 import { GRID_SIZE } from "./config";
+import { calculateGridSizes } from "./grid";
 
 export type Component = {
   id?: string;
@@ -40,6 +41,73 @@ export const replaceIdsDeeply = (treeRoot: Component) => {
   );
 };
 
+const addNodeToTarget = (
+  treeRoot: Component,
+  targetNode: Component,
+  copy: Component,
+  context: crawl.Context<Component>,
+  dropTarget: DropTarget,
+  dropIndex?: number
+) => {
+  const parent = context.parent as Component;
+  const isAddingToXAxis =
+    dropTarget.edge === "left" || dropTarget.edge === "right";
+  const isAddingToYAxis =
+    dropTarget.edge === "top" || dropTarget.edge === "bottom";
+  let target = isAddingToXAxis || isAddingToYAxis ? parent : targetNode;
+
+  if (dropTarget.edge === "center") {
+    targetNode.children = [...(targetNode.children || []), copy];
+    return;
+  }
+
+  if (dropTarget.edge === "top") {
+    if (targetNode.type === "GridColumn") {
+      target = getComponentParent(treeRoot, parent.id!)!;
+      dropIndex = getComponentIndex(target, parent.id!);
+    }
+
+    target.children?.splice(dropIndex ?? context.index, 0, copy);
+
+    return;
+  }
+
+  if (dropTarget.edge === "bottom") {
+    if (targetNode.type === "GridColumn") {
+      target = getComponentParent(treeRoot, parent.id!)!;
+      dropIndex = getComponentIndex(target, parent.id!) + 1;
+    }
+
+    target.children?.splice(dropIndex ?? context.index + 1, 0, copy);
+    return;
+  }
+
+  const gridColumn = {
+    id: nanoid(),
+    type: "GridColumn",
+    props: {
+      span: GRID_SIZE,
+      bg: "white",
+      style: {
+        height: "auto",
+        minHeight: "50px",
+        border: "2px dotted #ddd",
+      },
+    },
+    children: [copy],
+  } as Component;
+
+  if (dropTarget.edge === "left") {
+    target.children?.splice(
+      dropIndex ?? context.index - 1 < 0 ? 0 : context.index,
+      0,
+      gridColumn
+    );
+  } else if (dropTarget.edge === "right") {
+    target.children?.splice(dropIndex ?? context.index + 1, 0, gridColumn);
+  }
+};
+
 export const addComponent = (
   treeRoot: Component,
   componentToAdd: Component,
@@ -49,171 +117,18 @@ export const addComponent = (
   const copy = cloneDeep(componentToAdd);
   replaceIdsDeeply(copy);
 
-  const recalculateGridSize = (
-    targetNode: Component,
-    context: crawl.Context<Component>
-  ) => {
-    const parent = context.parent as Component;
-    const isAddingToSide =
-      dropTarget.edge === "left" || dropTarget.edge === "right";
-    const target = isAddingToSide ? parent : targetNode;
-
-    const size = GRID_SIZE;
-    let childSpan = GRID_SIZE / 2;
-    let targetSpan = target.props?.gridSize ?? target.props?.span;
-    let newSpan =
-      targetSpan === size ? childSpan : (childSpan * targetSpan) / size;
-
-    copy.props = {
-      ...copy.props,
-      gridSize: targetSpan,
-    };
-
-    copy.children?.forEach((child) => {
-      if (child.type === "GridColumn") {
-        child.props!.span = newSpan;
-      }
-    });
-
-    if (dropTarget.edge === "center") {
-      targetNode.children = [...(targetNode.children || []), copy];
-      return;
-    }
-
-    const gridColumn = {
-      id: nanoid(),
-      type: "GridColumn",
-      props: {
-        span: newSpan,
-        bg: "white",
-        style: {
-          height: "auto",
-          minHeight: "50px",
-          border: "2px dotted #ddd",
-        },
-      },
-      children: [copy],
-    } as Component;
-
-    if (dropTarget.edge === "left") {
-      target.children?.splice(
-        dropIndex ?? context.index - 1 < 0 ? 0 : context.index,
-        0,
-        gridColumn
-      );
-    } else if (dropTarget.edge === "right") {
-      target.children?.splice(dropIndex ?? context.index + 1, 0, gridColumn);
-    }
-
-    childSpan = size / target.children.length;
-    targetSpan = target.props?.gridSize ?? target.props?.span;
-    newSpan = targetSpan === size ? childSpan : (childSpan * targetSpan) / size;
-
-    target.children?.forEach((child) => {
-      if (child.type === "GridColumn") {
-        child.props!.span = newSpan;
-      }
-    });
-
-    const newChildSpan =
-      newSpan === size ? newSpan : ((GRID_SIZE / 2) * newSpan) / size;
-
-    copy.props = {
-      ...copy.props,
-      gridSize: newSpan,
-    };
-
-    copy.children?.forEach((child) => {
-      if (child.type === "GridColumn") {
-        child.props!.span = newChildSpan;
-      }
-    });
-  };
-
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === dropTarget.id) {
-        node.children = node.children ?? [];
-
-        const parent = context.parent as Component;
-
-        recalculateGridSize(node, context);
-
-        if (dropTarget.edge === "top") {
-          let target = parent;
-          if (node.type === "GridColumn") {
-            target = getComponentParent(treeRoot, parent.id);
-            dropIndex = getComponentIndex(target, parent.id) - 1;
-          }
-
-          parentSpan = target.props.gridSize ?? size;
-
-          const grid = {
-            ...copy,
-            id: nanoid(),
-            type: "Grid",
-            props: {
-              ...copy.props,
-              gridSize: parentSpan,
-            },
-          } as Component;
-
-          target.children?.splice(
-            dropIndex ?? context.index - 1 < 0 ? 0 : context.index - 1,
-            0,
-            grid
-          );
-
-          childSpan = GRID_SIZE / (grid.children?.length ?? 1);
-          newSpan =
-            parentSpan === size ? childSpan : (childSpan * parentSpan) / size;
-
-          console.log({ newSpan, childSpan, parentSpan });
-
-          grid.children?.forEach((child) => {
-            if (child.type === "GridColumn") {
-              child.props.span = newSpan;
-            }
-          });
-        } else if (dropTarget.edge === "bottom") {
-          let target = parent;
-          if (node.type === "GridColumn") {
-            target = getComponentParent(treeRoot, parent.id);
-            dropIndex = getComponentIndex(target, parent.id) + 1;
-          }
-
-          parentSpan = target.props.gridSize ?? size;
-
-          const grid = {
-            ...copy,
-            id: nanoid(),
-            type: "Grid",
-            props: {
-              ...copy.props,
-              gridSize: parentSpan,
-            },
-          } as Component;
-
-          target.children?.splice(dropIndex ?? context.index + 1, 0, grid);
-          childSpan = GRID_SIZE / (grid.children?.length ?? 1);
-          newSpan =
-            parentSpan === size ? childSpan : (childSpan * parentSpan) / size;
-
-          console.log({ newSpan, childSpan, parentSpan });
-
-          grid.children?.forEach((child) => {
-            if (child.type === "GridColumn") {
-              child.props.span = newSpan;
-            }
-          });
-        }
-
+        addNodeToTarget(treeRoot, node, copy, context, dropTarget, dropIndex);
         context.break();
       }
     },
     { order: "bfs" }
   );
+
+  calculateGridSizes(treeRoot);
 
   return copy.id as string;
 };
@@ -287,32 +202,39 @@ export const moveComponent = (
   id: string,
   dropTarget: DropTarget
 ) => {
-  console.log("move component");
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === id) {
-        const parent = context.parent;
-        const items = (parent?.children?.map((c) => c.id) ?? []) as string[];
-        const oldIndex = items.indexOf(id);
-        let newIndex = items.indexOf(dropTarget.id);
+        const isGrid = node.type === "Grid";
+        if (isGrid) {
+          addNodeToTarget(treeRoot, context.parent!, node, context, dropTarget);
+        } else {
+          const parent = context.parent;
+          const items = (parent?.children?.map((c) => c.id) ?? []) as string[];
+          const oldIndex = items.indexOf(id);
+          let newIndex = items.indexOf(dropTarget.id);
 
-        if (["top", "left"].includes(dropTarget.edge) && oldIndex < newIndex) {
-          newIndex = Math.max(newIndex - 1, 0);
-        } else if (
-          ["right", "bottom", "center"].includes(dropTarget.edge) &&
-          newIndex < oldIndex
-        ) {
-          newIndex = Math.min(newIndex + 1, items.length);
-        }
+          if (
+            ["top", "left"].includes(dropTarget.edge) &&
+            oldIndex < newIndex
+          ) {
+            newIndex = Math.max(newIndex - 1, 0);
+          } else if (
+            ["right", "bottom", "center"].includes(dropTarget.edge) &&
+            newIndex < oldIndex
+          ) {
+            newIndex = Math.min(newIndex + 1, items.length);
+          }
 
-        if (oldIndex !== newIndex) {
-          const newPositions = arrayMove(items, oldIndex, newIndex);
-          parent!.children = parent?.children?.sort((a, b) => {
-            const aIndex = newPositions.indexOf(a.id as string);
-            const bIndex = newPositions.indexOf(b.id as string);
-            return aIndex - bIndex;
-          });
+          if (oldIndex !== newIndex) {
+            const newPositions = arrayMove(items, oldIndex, newIndex);
+            parent!.children = parent?.children?.sort((a, b) => {
+              const aIndex = newPositions.indexOf(a.id as string);
+              const bIndex = newPositions.indexOf(b.id as string);
+              return aIndex - bIndex;
+            });
+          }
         }
 
         context.break();
@@ -320,6 +242,8 @@ export const moveComponent = (
     },
     { order: "bfs" }
   );
+
+  calculateGridSizes(treeRoot);
 };
 
 export const moveComponentToDifferentParent = (
@@ -328,36 +252,45 @@ export const moveComponentToDifferentParent = (
   dropTarget: DropTarget,
   newParentId: string
 ) => {
-  console.log("move component to different parent");
   const _componentToAdd = getComponentById(treeRoot, id) as Component;
-  const componentToAdd = cloneDeep(_componentToAdd);
+  let componentToAdd = cloneDeep(_componentToAdd);
+  const isGrid = componentToAdd.type === "Grid";
 
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === newParentId) {
-        if (dropTarget.edge === "left" || dropTarget.edge === "top") {
-          const dropIndex = node.children?.findIndex(
-            (c) => c.id === dropTarget.id
-          );
-          node.children?.splice(Math.max(dropIndex || 0, 0), 0, componentToAdd);
-        } else if (
-          dropTarget.edge === "right" ||
-          dropTarget.edge === "bottom" ||
-          dropTarget.edge === "center"
-        ) {
-          if (!node.children) {
-            node.children = [];
-          }
+        if (isGrid) {
+          console.log("MOVE COMPONENT TO DIFFERENT PARENT");
+          addNodeToTarget(treeRoot, node, componentToAdd, context, dropTarget);
+        } else {
+          if (dropTarget.edge === "left" || dropTarget.edge === "top") {
+            const dropIndex = node.children?.findIndex(
+              (c) => c.id === dropTarget.id
+            );
+            node.children?.splice(
+              Math.max(dropIndex || 0, 0),
+              0,
+              componentToAdd
+            );
+          } else if (
+            dropTarget.edge === "right" ||
+            dropTarget.edge === "bottom" ||
+            dropTarget.edge === "center"
+          ) {
+            if (!node.children) {
+              node.children = [];
+            }
 
-          const dropIndex = node.children.findIndex(
-            (c) => c.id === dropTarget.id
-          );
-          node.children.splice(
-            Math.min((dropIndex || 0) + 1, node.children.length),
-            0,
-            componentToAdd
-          );
+            const dropIndex = node.children.findIndex(
+              (c) => c.id === dropTarget.id
+            );
+            node.children.splice(
+              Math.min((dropIndex || 0) + 1, node.children.length),
+              0,
+              componentToAdd
+            );
+          }
         }
 
         context.break();
@@ -365,6 +298,8 @@ export const moveComponentToDifferentParent = (
     },
     { order: "bfs" }
   );
+
+  calculateGridSizes(treeRoot);
 };
 
 export const removeComponentFromParent = (
@@ -372,31 +307,45 @@ export const removeComponentFromParent = (
   id: string,
   parentId: string
 ) => {
+  let shouldRecalculate = false;
+
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === id && context.parent?.id === parentId) {
         context.parent?.children?.splice(context.index, 1);
+        shouldRecalculate = node.type === "GridColumn" || node.type === "Grid";
         context.remove();
         context.break();
       }
     },
     { order: "bfs" }
   );
+
+  if (shouldRecalculate) {
+    calculateGridSizes(treeRoot);
+  }
 };
 
 export const removeComponent = (treeRoot: Component, id: string) => {
+  let shouldRecalculate = false;
+
   crawl(
     treeRoot,
     (node, context) => {
       if (node.id === id) {
         context.parent?.children?.splice(context.index, 1);
+        shouldRecalculate = node.type === "GridColumn" || node.type === "Grid";
         context.remove();
         context.break();
       }
     },
     { order: "bfs" }
   );
+
+  if (shouldRecalculate) {
+    calculateGridSizes(treeRoot);
+  }
 };
 
 export const updateTreeComponentChildren = (

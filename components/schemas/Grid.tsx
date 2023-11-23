@@ -9,6 +9,7 @@ export const schema = {
     m: 0,
     p: 0,
     gridSize: GRID_SIZE,
+    gap: "xs",
     style: {
       width: "100%",
       height: "auto",

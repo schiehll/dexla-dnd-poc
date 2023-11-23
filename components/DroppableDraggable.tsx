@@ -2,7 +2,7 @@ import { useDraggable } from "@/hooks/useDraggable";
 import { useDroppable } from "@/hooks/useDroppable";
 import { useOnDrop } from "@/hooks/useOnDrop";
 import { useEditorStore } from "@/stores/editor";
-import { Component, updateTreeComponentChildren } from "@/utils/editor";
+import { Component, addComponent } from "@/utils/editor";
 import {
   Box,
   BoxProps,
@@ -12,8 +12,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { PropsWithChildren, cloneElement, useRef } from "react";
-import { schema } from "./schemas/GridColumn";
-import { nanoid } from "nanoid";
+import { schema } from "@/components/schemas/GridColumn";
 import cloneDeep from "lodash.clonedeep";
 
 type Props = {
@@ -83,7 +82,15 @@ export const DroppableDraggable = ({
         {/* @ts-ignore */}
         {children?.children}
         {selectedId === id && (
-          <Group h={20} top={-20} left={0} noWrap pos="absolute" spacing="xs">
+          <Group
+            h={20}
+            top={-20}
+            left={0}
+            noWrap
+            pos="absolute"
+            spacing="xs"
+            style={{ zIndex: 9999 }}
+          >
             <Box
               h={20}
               bg="green"
@@ -104,22 +111,11 @@ export const DroppableDraggable = ({
                 compact
                 onClick={() => {
                   const copy = cloneDeep(tree);
-                  const childs = (component.children ?? [])
-                    .concat({ ...schema, id: nanoid() })
-                    .map((child) => {
-                      return {
-                        ...child,
-                        props: {
-                          ...child.props,
-                          span: Math.floor(
-                            // @ts-ignore
-                            component.props.gridSize /
-                              ((component.children?.length ?? 1) + 1)
-                          ),
-                        },
-                      };
-                    });
-                  updateTreeComponentChildren(copy, id, childs);
+                  addComponent(copy, schema, {
+                    id: component.id!,
+                    edge: "center",
+                  });
+
                   setTree(copy);
                 }}
               >

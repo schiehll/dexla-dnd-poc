@@ -3,18 +3,16 @@ import {
   getComponentById,
   getComponentParent,
   removeComponent,
-  updateTreeComponentChildren,
 } from "@/utils/editor";
-import { Droppable } from "./Droppable";
+import { Droppable } from "@/components/Droppable";
+import { DroppableDraggable } from "@/components/DroppableDraggable";
 import { Paper } from "@mantine/core";
 import { componentMapper } from "@/utils/componentMapper";
 import { useEditorStore } from "@/stores/editor";
-import { DroppableDraggable } from "./DroppableDraggable";
 import { useHotkeys } from "@mantine/hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useCallback } from "react";
-import { GRID_SIZE } from "@/utils/config";
-import { Grid } from "./mapper/Grid";
+import { calculateGridSizes } from "@/utils/grid";
 
 export const Editor = () => {
   const tree = useEditorStore((state) => state.tree);
@@ -30,17 +28,12 @@ export const Editor = () => {
       const parent = getComponentParent(copy, selectedComponentId);
       removeComponent(copy, selectedComponentId);
 
-      if (comp?.type === "GridColumn") {
-        const childs = (parent?.children ?? [])?.map((child) => {
-          return {
-            ...child,
-            props: {
-              ...child.props,
-              span: Math.floor(GRID_SIZE / (parent?.children?.length ?? 1)),
-            },
-          };
-        });
-        updateTreeComponentChildren(copy, parent?.id!, childs);
+      if (
+        comp?.type === "GridColumn" &&
+        parent?.type === "Grid" &&
+        parent.children?.length === 0
+      ) {
+        removeComponent(copy, parent.id!);
       }
 
       setEditorTree(copy);
