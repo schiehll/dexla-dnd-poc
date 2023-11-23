@@ -2,7 +2,7 @@ import { useDraggable } from "@/hooks/useDraggable";
 import { useDroppable } from "@/hooks/useDroppable";
 import { useOnDrop } from "@/hooks/useOnDrop";
 import { useEditorStore } from "@/stores/editor";
-import { Component, addComponent } from "@/utils/editor";
+import { Component, addComponent, getComponentParent } from "@/utils/editor";
 import {
   Box,
   BoxProps,
@@ -37,6 +37,7 @@ export const DroppableDraggable = ({
   const setTree = useEditorStore((state) => state.setTree);
   const isResizing = useEditorStore((state) => state.isResizing);
   const onDrop = useOnDrop();
+  const parent = getComponentParent(tree, id);
 
   const draggable = useDraggable({
     id,
@@ -106,40 +107,84 @@ export const DroppableDraggable = ({
               </Text>
             </Box>
             {component.type === "Grid" && (
-              <Button
-                color="green"
-                size="xs"
-                compact
-                onClick={() => {
-                  const copy = cloneDeep(tree);
-                  addComponent(copy, ColumnSchema, {
-                    id: component.id!,
-                    edge: "center",
-                  });
+              <>
+                <Button
+                  color="green"
+                  size="xs"
+                  compact
+                  onClick={() => {
+                    const copy = cloneDeep(tree);
+                    addComponent(copy, ColumnSchema, {
+                      id: component.id!,
+                      edge: "center",
+                    });
 
-                  setTree(copy);
-                }}
-              >
-                Add Column
-              </Button>
+                    setTree(copy);
+                  }}
+                >
+                  Add Column
+                </Button>
+                <Button
+                  color="green"
+                  size="xs"
+                  compact
+                  onClick={() => {
+                    const copy = cloneDeep(tree);
+                    addComponent(
+                      copy,
+                      { ...GridSchema, children: [GridSchema.children[0]] },
+                      {
+                        id: parent?.id!,
+                        edge: "center",
+                      }
+                    );
+
+                    setTree(copy);
+                  }}
+                >
+                  Add Row
+                </Button>
+              </>
             )}
             {component.type === "GridColumn" && (
-              <Button
-                color="green"
-                size="xs"
-                compact
-                onClick={() => {
-                  const copy = cloneDeep(tree);
-                  addComponent(copy, GridSchema, {
-                    id: component.id!,
-                    edge: "center",
-                  });
+              <>
+                <Button
+                  color="green"
+                  size="xs"
+                  compact
+                  onClick={() => {
+                    const copy = cloneDeep(tree);
+                    addComponent(copy, GridSchema, {
+                      id: component.id!,
+                      edge: "center",
+                    });
 
-                  setTree(copy);
-                }}
-              >
-                Split Column
-              </Button>
+                    setTree(copy);
+                  }}
+                >
+                  Split Column
+                </Button>
+                <Button
+                  color="green"
+                  size="xs"
+                  compact
+                  onClick={() => {
+                    const copy = cloneDeep(tree);
+                    addComponent(
+                      copy,
+                      { ...GridSchema, children: [GridSchema.children[0]] },
+                      {
+                        id: component?.id!,
+                        edge: "center",
+                      }
+                    );
+
+                    setTree(copy);
+                  }}
+                >
+                  Add Row
+                </Button>
+              </>
             )}
           </Group>
         )}
