@@ -1,6 +1,6 @@
 import { useEditorStore } from "@/stores/editor";
 import { componentMapper } from "@/utils/componentMapper";
-import { getComponentById } from "@/utils/editor";
+import { checkIfIsDirectAncestor, getComponentById } from "@/utils/editor";
 import { useCallback, useState } from "react";
 
 export type DropTarget = {
@@ -109,8 +109,14 @@ export const useDroppable = ({
 
       const activeComponent = getComponentById(tree, activeId!);
       const comp = getComponentById(tree, id);
+      const isTryingToDropInsideItself = checkIfIsDirectAncestor(
+        tree,
+        id,
+        activeId!
+      );
 
       if (
+        !isTryingToDropInsideItself &&
         activeComponent &&
         componentMapper[
           activeComponent?.type as string

@@ -3,6 +3,7 @@ import crawl from "tree-crawl";
 import cloneDeep from "lodash.clonedeep";
 import { GRID_SIZE } from "./config";
 import { calculateGridSizes } from "./grid";
+import { tree } from "next/dist/build/templates/app-page";
 
 export type Component = {
   id?: string;
@@ -382,5 +383,67 @@ export const updateTreeComponentProps = (
       }
     },
     { order: "bfs" }
+  );
+};
+
+export const checkIfIsChild = (treeRoot: Component, childId: string) => {
+  let isChild = false;
+
+  crawl(
+    treeRoot,
+    (node, context) => {
+      if (node.id === childId) {
+        isChild = true;
+        context.break();
+      }
+    },
+    { order: "bfs" }
+  );
+
+  return isChild;
+};
+
+const checkIfIsChildDeep = (treeRoot: Component, childId: string): boolean => {
+  let isChild = checkIfIsChild(treeRoot, childId);
+
+  if (!isChild && (treeRoot.children ?? [])?.length > 0) {
+    const length = (treeRoot.children ?? []).length;
+    for (let i = 0; i < length; i++) {
+      if (isChild) {
+        break;
+      }
+      // @ts-ignore
+      isChild = checkIfIsChildDeep(treeRoot.children[i], childId);
+    }
+  }
+
+  return isChild;
+};
+
+export const checkIfIsDirectAncestor = (
+  treeRoot: Component,
+  childId: string,
+  possibleAncestorId: string
+) => {
+  let possibleAncestorDepth = null;
+  let childDepth = 0;
+  let isDirectChild = false;
+
+  crawl(
+    treeRoot,
+    (node, context) => {
+      if (node.id === possibleAncestorId) {
+        possibleAncestorDepth = context.depth;
+        isDirectChild = checkIfIsChildDeep(node, childId);
+      } else if (node.id === childId) {
+        childDepth = context.depth;
+        context.break();
+      }
+    },
+    { order: "pre" }
+  );
+
+  return (
+    possibleAncestorDepth && possibleAncestorDepth < childDepth && isDirectChild
   );
 };
