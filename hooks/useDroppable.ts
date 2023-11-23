@@ -114,10 +114,6 @@ export const useDroppable = ({
           ? checkIfIsChildDeep(activeComponent!, id)
           : false;
 
-      if (isTryingToDropInsideItself) {
-        console.log({ activeId, id, activeComponent, target: comp, tree });
-      }
-
       if (
         !isTryingToDropInsideItself &&
         activeComponent &&

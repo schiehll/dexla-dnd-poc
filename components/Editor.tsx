@@ -26,6 +26,17 @@ export const Editor = () => {
 
       const comp = getComponentById(copy, selectedComponentId);
       const parent = getComponentParent(copy, selectedComponentId);
+      const grantParent = getComponentParent(copy, parent!.id!);
+
+      if (
+        comp?.type === "GridColumn" &&
+        parent?.type === "Grid" &&
+        parent.children?.length === 1 &&
+        grantParent?.id === "root"
+      ) {
+        return;
+      }
+
       removeComponent(copy, selectedComponentId);
 
       if (

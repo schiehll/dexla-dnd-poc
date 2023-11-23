@@ -27,7 +27,7 @@ export const componentMapper: ComponentMapper = {
       // @ts-ignore
       return <Grid {...props} />;
     },
-    allowedParentTypes: ["GridColumn"],
+    allowedParentTypes: ["Grid", "GridColumn"],
   },
   GridColumn: {
     Component: (props: { component: Component; renderTree: any }) => {
