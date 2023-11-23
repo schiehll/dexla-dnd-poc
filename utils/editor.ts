@@ -403,7 +403,10 @@ export const checkIfIsChild = (treeRoot: Component, childId: string) => {
   return isChild;
 };
 
-const checkIfIsChildDeep = (treeRoot: Component, childId: string): boolean => {
+export const checkIfIsChildDeep = (
+  treeRoot: Component,
+  childId: string
+): boolean => {
   let isChild = checkIfIsChild(treeRoot, childId);
 
   if (!isChild && (treeRoot.children ?? [])?.length > 0) {

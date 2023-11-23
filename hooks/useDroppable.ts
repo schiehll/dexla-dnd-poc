@@ -1,6 +1,6 @@
 import { useEditorStore } from "@/stores/editor";
 import { componentMapper } from "@/utils/componentMapper";
-import { checkIfIsDirectAncestor, getComponentById } from "@/utils/editor";
+import { checkIfIsChildDeep, getComponentById } from "@/utils/editor";
 import { useCallback, useState } from "react";
 
 export type DropTarget = {
@@ -109,11 +109,14 @@ export const useDroppable = ({
 
       const activeComponent = getComponentById(tree, activeId!);
       const comp = getComponentById(tree, id);
-      const isTryingToDropInsideItself = checkIfIsDirectAncestor(
-        tree,
-        id,
-        activeId!
-      );
+      const isTryingToDropInsideItself =
+        activeComponent && activeId !== id
+          ? checkIfIsChildDeep(activeComponent!, id)
+          : false;
+
+      if (isTryingToDropInsideItself) {
+        console.log({ activeId, id, activeComponent, target: comp, tree });
+      }
 
       if (
         !isTryingToDropInsideItself &&
@@ -129,7 +132,7 @@ export const useDroppable = ({
         event.stopPropagation();
       }
     },
-    [setCurrentTargetId, id, tree]
+    [setCurrentTargetId, id, activeId, tree]
   );
 
   // TODO: Handle isOver differently to have better ux as currently
