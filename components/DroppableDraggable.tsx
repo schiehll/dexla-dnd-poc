@@ -12,7 +12,8 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { PropsWithChildren, cloneElement, useRef } from "react";
-import { schema } from "@/components/schemas/GridColumn";
+import { schema as ColumnSchema } from "@/components/schemas/GridColumn";
+import { schema as GridSchema } from "@/components/schemas/Grid";
 import cloneDeep from "lodash.clonedeep";
 
 type Props = {
@@ -111,7 +112,7 @@ export const DroppableDraggable = ({
                 compact
                 onClick={() => {
                   const copy = cloneDeep(tree);
-                  addComponent(copy, schema, {
+                  addComponent(copy, ColumnSchema, {
                     id: component.id!,
                     edge: "center",
                   });
@@ -120,6 +121,24 @@ export const DroppableDraggable = ({
                 }}
               >
                 Add Column
+              </Button>
+            )}
+            {component.type === "GridColumn" && (
+              <Button
+                color="green"
+                size="xs"
+                compact
+                onClick={() => {
+                  const copy = cloneDeep(tree);
+                  addComponent(copy, GridSchema, {
+                    id: component.id!,
+                    edge: "center",
+                  });
+
+                  setTree(copy);
+                }}
+              >
+                Split Column
               </Button>
             )}
           </Group>
