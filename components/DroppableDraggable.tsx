@@ -11,7 +11,7 @@ import {
   Text,
   useMantineTheme,
 } from "@mantine/core";
-import { PropsWithChildren, cloneElement, useRef } from "react";
+import { PropsWithChildren, cloneElement } from "react";
 import { schema as ColumnSchema } from "@/components/schemas/GridColumn";
 import { schema as GridSchema } from "@/components/schemas/Grid";
 import cloneDeep from "lodash.clonedeep";
@@ -28,7 +28,6 @@ export const DroppableDraggable = ({
   ...props
 }: PropsWithChildren<Props>) => {
   const theme = useMantineTheme();
-  const elRef = useRef(null);
   const selectedId = useEditorStore((state) => state.selectedId);
   const currentTargetId = useEditorStore((state) => state.currentTargetId);
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
@@ -198,7 +197,6 @@ export const DroppableDraggable = ({
         // @ts-ignore
         children,
         {
-          ref: elRef,
           component,
           ...droppable,
           ...props,
