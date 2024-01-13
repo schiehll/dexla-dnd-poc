@@ -12,14 +12,13 @@ export const useDraggable = ({
   const handleDragStart = useCallback(
     (event: React.DragEvent) => {
       const w = currentWindow ?? window;
-      const el = w.document.getElementById(id)!;
-      const rect = el?.getBoundingClientRect()!;
+      const hidden = w.document.createElement("div");
+      hidden.style.width = "100px";
+      hidden.style.height = "100px";
+      hidden.style.opacity = "0";
+      w.document.body.appendChild(hidden);
 
-      const x = Math.max(0, Math.round(event.pageX - rect.left - w.scrollX));
-
-      const y = Math.max(0, Math.round(event.pageY - rect.top - w.scrollY));
-
-      event.dataTransfer.setDragImage(el, x, y);
+      event.dataTransfer.setDragImage(hidden, 0, 0);
       event.dataTransfer.effectAllowed = "copyMove";
       onDragStart(id);
     },

@@ -185,17 +185,8 @@ export const addComponent = (
   crawl(
     treeRoot,
     (node, context) => {
-      if (node.id === dropTarget.id) {
-        addNodeToTarget(
-          treeRoot,
-          node,
-          copy,
-          context,
-          dropTarget,
-          false,
-          false,
-          dropIndex
-        );
+      if (node.id === "root") {
+        node.children?.push(copy);
         context.break();
       }
     },

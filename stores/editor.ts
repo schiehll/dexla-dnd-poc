@@ -1,4 +1,3 @@
-import { GRID_SIZE } from "@/utils/config";
 import { Component } from "@/utils/editor";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
@@ -14,9 +13,17 @@ type EditorState = {
   setCurrentTargetId: (currentTargetId?: string) => void;
   isResizing?: boolean;
   setIsResizing: (isResizing?: boolean) => void;
-  gridUpdates: { [key: string]: any };
-  setGridUpdates: (gridUpdates: { [key: string]: any }) => void;
+  isDragging?: boolean;
+  setIsDragging: (isDragging?: boolean) => void;
+  previewPosition?: { top: number; left: number };
+  setPreviewPosition?: (previewPosition?: {
+    top: number;
+    left: number;
+  }) => void;
 };
+
+export const GRID_SIZE_Y = 10;
+export const GRID_SIZE_X = 60;
 
 export const useEditorStore = create<EditorState>((set) => ({
   tree: {
@@ -25,33 +32,35 @@ export const useEditorStore = create<EditorState>((set) => ({
     children: [
       {
         id: nanoid(),
-        type: "Grid",
+        type: "Container",
         props: {
+          w: "100%",
           bg: "white",
-          m: 0,
-          p: 0,
-          gridSize: GRID_SIZE,
           style: {
-            width: "100%",
-            height: "auto",
-            minHeight: "50px",
+            height: "calc(100vh - 200px)",
           },
-        },
-        children: [
-          {
-            id: nanoid(),
-            type: "GridColumn",
-            props: {
-              span: GRID_SIZE,
-              bg: "white",
-              style: {
-                height: "auto",
-                minHeight: "50px",
-                border: "2px dotted #ddd",
-              },
+          grid: {
+            style: {
+              position: "relative",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "calc(100vh - 200px)",
+              backgroundImage: `
+                repeating-linear-gradient( 
+                  0deg, transparent, transparent calc(${GRID_SIZE_Y}px - 1px), 
+                  #ddd calc(${GRID_SIZE_Y}px - 1px), 
+                  #ddd ${GRID_SIZE_Y}px ),
+                repeating-linear-gradient( 
+                  -90deg, transparent, transparent calc(${GRID_SIZE_X}px - 1px), 
+                  #ddd calc(${GRID_SIZE_X}px - 1px), #ddd ${GRID_SIZE_X}px )`,
+              backgroundSize: `${GRID_SIZE_X}px ${GRID_SIZE_Y}px`,
+              zIndex: 0,
+              pointerEvents: "none",
             },
           },
-        ],
+        },
+        children: [],
       },
     ],
   },
@@ -60,6 +69,6 @@ export const useEditorStore = create<EditorState>((set) => ({
   setSelectedId: (id) => set({ selectedId: id }),
   setCurrentTargetId: (currentTargetId) => set({ currentTargetId }),
   setIsResizing: (isResizing) => set({ isResizing }),
-  gridUpdates: {},
-  setGridUpdates: (gridUpdates) => set({ gridUpdates }),
+  setIsDragging: (isDragging) => set({ isDragging }),
+  setPreviewPosition: (previewPosition) => set({ previewPosition }),
 }));

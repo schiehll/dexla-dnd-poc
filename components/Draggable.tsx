@@ -20,12 +20,14 @@ export const Draggable = ({
   const theme = useMantineTheme();
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
   const setComponentToAdd = useEditorStore((state) => state.setComponentToAdd);
+  const setIsDragging = useEditorStore((state) => state.setIsDragging);
 
   const draggable = useDraggable({
     id,
     onDragStart: (id: string) => {
       setSelectedId(id);
       setComponentToAdd(data);
+      setIsDragging(true);
     },
   });
 

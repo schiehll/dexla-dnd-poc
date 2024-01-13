@@ -3,7 +3,7 @@ import { Editor } from "@/components/Editor";
 import { Component } from "@/utils/editor";
 import { Box, Flex, Stack, Text, useMantineTheme } from "@mantine/core";
 import { schema as ContainerSchema } from "@/components/schemas/Container";
-import { schema as GridSchema } from "@/components/schemas/Grid";
+import { schema as ButtonSchema } from "@/components/schemas/Button";
 
 const Item = ({ id, data }: { data: Component; id: string }) => {
   return (
@@ -27,7 +27,7 @@ export default function Home() {
         sx={{ borderRight: `1px solid ${theme.colors.gray[3]}` }}
       >
         <Item id="Container" data={ContainerSchema} />
-        <Item id="Grid" data={GridSchema} />
+        <Item id="Button" data={ButtonSchema} />
       </Stack>
       <Box m={40} w={`calc(100vw - 200px)`}>
         <Editor />

@@ -12,7 +12,6 @@ import {
   removeComponent,
   removeComponentFromParent,
 } from "@/utils/editor";
-import { componentMapper } from "@/utils/componentMapper";
 
 export const useOnDrop = () => {
   const editorTree = useEditorStore((state) => state.tree);
@@ -21,6 +20,10 @@ export const useOnDrop = () => {
   const setComponentToAdd = useEditorStore((state) => state.setComponentToAdd);
   const componentToAdd = useEditorStore((state) => state.componentToAdd);
   const isResizing = useEditorStore((state) => state.isResizing);
+  const previewPosition = useEditorStore((state) => state.previewPosition);
+  const setPreviewPosition = useEditorStore(
+    (state) => state.setPreviewPosition
+  );
 
   const onDrop = useCallback(
     (_droppedId: string, dropTarget: DropTarget) => {
@@ -32,12 +35,17 @@ export const useOnDrop = () => {
       const isMoving = !!activeComponent;
 
       if (!isMoving && droppedId && componentToAdd) {
-        handleComponentAddition(
-          copy,
-          dropTarget,
-          targetComponent,
-          componentToAdd
-        );
+        handleComponentAddition(copy, dropTarget, targetComponent, {
+          ...componentToAdd,
+          props: {
+            ...componentToAdd.props,
+            style: {
+              ...(componentToAdd.props?.style ?? {}),
+              ...previewPosition,
+              position: "absolute",
+            },
+          },
+        });
       } else if (dropTarget.id !== "root") {
         const isDopopingInVerticalAxis =
           dropTarget.edge === "top" || dropTarget.edge === "bottom";
@@ -61,6 +69,7 @@ export const useOnDrop = () => {
       }
 
       setEditorTree(copy);
+      setPreviewPosition?.(undefined);
     },
     [
       componentToAdd,
@@ -70,6 +79,8 @@ export const useOnDrop = () => {
       handleReorderingOrMoving,
       handleRootDrop,
       isResizing,
+      setPreviewPosition,
+      previewPosition,
     ]
   );
 
@@ -80,21 +91,8 @@ export const useOnDrop = () => {
     targetComponent: Component | null,
     componentToAdd: Component
   ) {
-    const targetParent = getComponentParent(copy, dropTarget.id);
-    const allowedParentTypes =
-      componentMapper[componentToAdd.type].allowedParentTypes;
-    if (allowedParentTypes?.includes(targetComponent?.type as string)) {
-      const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
-      setSelectedId(newSelectedId);
-    } else {
-      if (targetParent && allowedParentTypes?.includes(targetParent.type)) {
-        const newSelectedId = addComponent(copy, componentToAdd, {
-          id: targetParent.id as string,
-          edge: dropTarget.edge,
-        });
-        setSelectedId(newSelectedId);
-      }
-    }
+    const newSelectedId = addComponent(copy, componentToAdd, dropTarget);
+    setSelectedId(newSelectedId);
 
     setComponentToAdd(undefined);
   }
@@ -143,10 +141,21 @@ export const useOnDrop = () => {
     activeComponent: Component | null,
     dropTarget: DropTarget
   ) {
+    const comp = activeComponent as unknown as Component;
     removeComponent(copy, droppedId);
     const newSelectedId = addComponent(
       copy,
-      activeComponent as unknown as Component,
+      {
+        ...comp,
+        props: {
+          ...comp.props,
+          style: {
+            ...(comp.props?.style ?? {}),
+            ...previewPosition,
+            position: "absolute",
+          },
+        },
+      },
       dropTarget
     );
     setSelectedId(newSelectedId);

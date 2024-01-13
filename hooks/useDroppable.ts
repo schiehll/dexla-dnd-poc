@@ -1,5 +1,4 @@
-import { useEditorStore } from "@/stores/editor";
-import { componentMapper } from "@/utils/componentMapper";
+import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
 import { checkIfIsChildDeep, getComponentById } from "@/utils/editor";
 import { useCallback, useState } from "react";
 
@@ -40,6 +39,11 @@ export const useDroppable = ({
     (state) => state.setCurrentTargetId
   );
   const tree = useEditorStore((state) => state.tree);
+  const setIsDragging = useEditorStore((state) => state.setIsDragging);
+  const componentToAdd = useEditorStore((state) => state.componentToAdd);
+  const setPreviewPosition = useEditorStore(
+    (state) => state.setPreviewPosition
+  );
   const [edge, setEdge] = useState<Edge>();
 
   const handleDrop = useCallback(
@@ -52,6 +56,7 @@ export const useDroppable = ({
       } as DropTarget;
       onDrop?.(activeId!, dropTarget);
       setCurrentTargetId(undefined);
+      setIsDragging(false);
     },
     [activeId, id, edge, onDrop, setCurrentTargetId]
   );
@@ -98,9 +103,23 @@ export const useDroppable = ({
       const bottomDist = rect.bottom - mouseY;
 
       handleEdgeSet({ leftDist, rightDist, topDist, bottomDist }, 5);
+
+      const comp = getComponentById(tree, id);
+      if (comp?.id === "root") {
+        const gridX = GRID_SIZE_X;
+        const gridY = GRID_SIZE_Y;
+
+        const xPos = Math.floor(leftDist / gridX);
+        const yPos = Math.floor(topDist / gridY);
+
+        const top = rect.top + yPos * gridY;
+        const left = rect.left + xPos * gridX;
+
+        setPreviewPosition?.({ top: top + 2, left: left + 2 });
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, currentWindow]
+    [id, currentWindow, tree]
   );
 
   const handleDragEnter = useCallback(
@@ -114,13 +133,7 @@ export const useDroppable = ({
           ? checkIfIsChildDeep(activeComponent!, id)
           : false;
 
-      if (
-        !isTryingToDropInsideItself &&
-        activeComponent &&
-        componentMapper[
-          activeComponent?.type as string
-        ].allowedParentTypes?.includes(comp?.type as string)
-      ) {
+      if (!isTryingToDropInsideItself && activeComponent) {
         setCurrentTargetId(id);
         event.stopPropagation();
       } else if (!activeComponent) {

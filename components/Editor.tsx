@@ -6,19 +6,20 @@ import {
 } from "@/utils/editor";
 import { Droppable } from "@/components/Droppable";
 import { DroppableDraggable } from "@/components/DroppableDraggable";
-import { Paper } from "@mantine/core";
+import { Box, Paper } from "@mantine/core";
 import { componentMapper } from "@/utils/componentMapper";
-import { useEditorStore } from "@/stores/editor";
+import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
 import { useHotkeys } from "@mantine/hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useCallback } from "react";
-import { calculateGridSizes } from "@/utils/grid";
 
 export const Editor = () => {
   const tree = useEditorStore((state) => state.tree);
   const setEditorTree = useEditorStore((state) => state.setTree);
   const selectedComponentId = useEditorStore((state) => state.selectedId);
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
+  const previewPosition = useEditorStore((state) => state.previewPosition);
+  const componentToAdd = useEditorStore((state) => state.componentToAdd);
 
   const deleteComponent = useCallback(() => {
     if (selectedComponentId) {
@@ -93,5 +94,28 @@ export const Editor = () => {
     );
   };
 
-  return <>{renderTree(tree)}</>;
+  const comp =
+    componentToAdd ?? selectedComponentId
+      ? getComponentById(tree, selectedComponentId!)
+      : null;
+
+  return (
+    <>
+      {renderTree(tree)}
+      {previewPosition && comp && (
+        <Box
+          w={`${comp.props?.gridX * GRID_SIZE_X}px`}
+          h={`${comp.props?.gridY * GRID_SIZE_Y}px`}
+          bg="blue"
+          pos="absolute"
+          top={`${previewPosition.top}px`}
+          left={`${previewPosition.left}px`}
+          sx={{
+            zIndex: 100,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </>
+  );
 };

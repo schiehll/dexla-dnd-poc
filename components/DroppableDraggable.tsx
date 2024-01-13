@@ -31,6 +31,7 @@ export const DroppableDraggable = ({
   const selectedId = useEditorStore((state) => state.selectedId);
   const currentTargetId = useEditorStore((state) => state.currentTargetId);
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
+  const setIsDragging = useEditorStore((state) => state.setIsDragging);
   const setComponentToAdd = useEditorStore((state) => state.setComponentToAdd);
   const tree = useEditorStore((state) => state.tree);
   const setTree = useEditorStore((state) => state.setTree);
@@ -43,6 +44,7 @@ export const DroppableDraggable = ({
     onDragStart: (id: string) => {
       setSelectedId(id);
       setComponentToAdd(undefined);
+      setIsDragging(true);
     },
   });
 
@@ -77,7 +79,7 @@ export const DroppableDraggable = ({
     ? { boxShadow: baseShadow }
     : {};
 
-  const Child = () => {
+  const Controls = () => {
     return (
       <>
         {/* @ts-ignore */}
@@ -198,7 +200,6 @@ export const DroppableDraggable = ({
         children,
         {
           component,
-          ...droppable,
           ...props,
           pos: "relative",
           style: {
@@ -206,14 +207,14 @@ export const DroppableDraggable = ({
             ...(component.props?.style ?? {}),
             ...shadows,
           },
+          controls: Controls(),
           onClick: (e: any) => {
             // @ts-ignore
             props.onClick?.(e);
             e.stopPropagation();
             setSelectedId(id);
           },
-        },
-        Child()
+        }
       )}
     </>
   );
