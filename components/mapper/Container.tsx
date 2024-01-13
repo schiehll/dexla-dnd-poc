@@ -9,7 +9,7 @@ export const Container = forwardRef(
     const { grid } = component.props;
     const style = {
       ...props.style,
-      ...(isDragging || isResizing || true ? grid.style : {}),
+      ...(isDragging || isResizing ? grid.style : {}),
     };
 
     return (
