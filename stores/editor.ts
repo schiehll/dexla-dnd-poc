@@ -23,7 +23,7 @@ type EditorState = {
 };
 
 export const GRID_SIZE_Y = 10;
-export const GRID_SIZE_X = 60;
+export const GRID_SIZE_X = 80;
 
 export const useEditorStore = create<EditorState>((set) => ({
   tree: {

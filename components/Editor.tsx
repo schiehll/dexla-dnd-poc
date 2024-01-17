@@ -94,10 +94,11 @@ export const Editor = () => {
     );
   };
 
-  const comp =
-    componentToAdd ?? selectedComponentId
-      ? getComponentById(tree, selectedComponentId!)
-      : null;
+  const comp = componentToAdd
+    ? componentToAdd
+    : selectedComponentId
+    ? getComponentById(tree, selectedComponentId!)
+    : null;
 
   return (
     <>
