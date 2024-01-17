@@ -2,8 +2,8 @@ import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
 import { Component, updateTreeComponentProps } from "@/utils/editor";
 import { Box, ButtonProps, Button as MantineButton } from "@mantine/core";
 import cloneDeep from "lodash.clonedeep";
-import { Resizable } from "re-resizable";
-import { ReactElement, forwardRef, useEffect, useState } from "react";
+import { ReactElement, forwardRef } from "react";
+import { ResizableBox } from "react-resizable";
 
 type Props = {
   renderTree: (component: Component) => any;
@@ -11,6 +11,33 @@ type Props = {
   controls?: any;
 } & ButtonProps &
   ReactElement<"Button">;
+
+const ResizeHandle = forwardRef((props: any, ref: any) => {
+  const { handleAxis, ...restProps } = props;
+
+  let handleProps = {};
+  if (handleAxis === "s") {
+    handleProps = {
+      pos: "absolute",
+      bottom: "-10px",
+      left: `calc(50% - 10px)`,
+      w: 20,
+      h: 4,
+    };
+  }
+
+  if (handleAxis === "e") {
+    handleProps = {
+      pos: "absolute",
+      top: `calc(50% - 10px)`,
+      right: "-10px",
+      h: 20,
+      w: 4,
+    };
+  }
+
+  return <Box ref={ref} bg="red" {...handleProps} {...restProps} />;
+});
 
 export const Button = forwardRef(
   (
@@ -20,8 +47,6 @@ export const Button = forwardRef(
     const tree = useEditorStore((state) => state.tree);
     const setTree = useEditorStore((state) => state.setTree);
     const setIsResizing = useEditorStore((state) => state.setIsResizing);
-    const selectedId = useEditorStore((state) => state.selectedId);
-    const [snap, setSnap] = useState();
     const { children, loading, style, ...componentProps } =
       component.props as any;
 
@@ -30,64 +55,35 @@ export const Button = forwardRef(
       ...style,
     };
 
-    const width = `${componentProps?.gridX * GRID_SIZE_X}px`;
-    const height = `${componentProps?.gridY * GRID_SIZE_Y}px`;
-
-    useEffect(() => {
-      const root = window.document.getElementById("root");
-      if (root) {
-        const rect = root.getBoundingClientRect();
-        const xGrid: any[] = [];
-        [...new Array(500)].forEach((_, i) => {
-          xGrid.push(rect.left + GRID_SIZE_X * i);
-        });
-
-        const yGrid: any[] = [];
-        [...new Array(500)].forEach((_, i) => {
-          yGrid.push(rect.top + GRID_SIZE_Y * i);
-        });
-
-        setSnap({ x: xGrid, y: yGrid } as any);
-      }
-    }, []);
-
     return (
       <Box
         top={`${styles?.top}px`}
         left={`${styles?.left}px`}
-        component={Resizable}
-        size={{ height, width }}
+        component={ResizableBox}
+        height={componentProps?.gridY * GRID_SIZE_Y}
+        width={componentProps?.gridX * GRID_SIZE_X}
         style={{
           position: "absolute",
           padding: 0,
         }}
-        enable={{
-          top: false,
-          right: selectedId === component.id ? true : false,
-          bottom: selectedId === component.id ? true : false,
-          left: false,
-          topRight: false,
-          bottomRight: false,
-          bottomLeft: false,
-          topLeft: false,
-        }}
-        // @ts-ignore
-        onResizeStart={(e: any, direction: any, ref: any, delta: any) => {
+        draggableOpts={{ grid: [GRID_SIZE_X, GRID_SIZE_Y] }}
+        resizeHandles={["s", "e"]}
+        handle={<ResizeHandle />}
+        onResizeStart={() => {
           setIsResizing(true);
         }}
-        // @ts-ignore
-        onResize={(e: DragEvent, direction: any, ref: any, delta: any) => {
-          if (direction === "right") {
-            const rect = ref.getBoundingClientRect();
-            const newGridX = Math.ceil(rect.width / GRID_SIZE_X);
+        onResizeStop={(_, data) => {
+          setIsResizing(false);
+
+          if (data.handle === "e") {
+            const newGridX = Math.ceil(data.size.width / GRID_SIZE_X);
             const treeCopy = cloneDeep(tree);
             updateTreeComponentProps(treeCopy, component.id!, {
               gridX: newGridX,
             });
             setTree(treeCopy);
-          } else if (direction === "bottom") {
-            const rect = ref.getBoundingClientRect();
-            const newGridY = Math.floor(rect.height / GRID_SIZE_Y);
+          } else if (data.handle === "s") {
+            const newGridY = Math.floor(data.size.height / GRID_SIZE_Y);
             const treeCopy = cloneDeep(tree);
             updateTreeComponentProps(treeCopy, component.id!, {
               gridY: newGridY,
@@ -95,13 +91,6 @@ export const Button = forwardRef(
             setTree(treeCopy);
           }
         }}
-        onResizeStop={() => {
-          setIsResizing(false);
-        }}
-        snap={snap}
-        snapGap={0}
-        boundsByDirection
-        bounds="parent"
       >
         <MantineButton
           ref={ref}
