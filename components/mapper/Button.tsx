@@ -1,4 +1,4 @@
-import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
+import { useEditorStore } from "@/stores/editor";
 import { Component, updateTreeComponentProps } from "@/utils/editor";
 import { Box, ButtonProps, Button as MantineButton } from "@mantine/core";
 import cloneDeep from "lodash.clonedeep";
@@ -47,6 +47,7 @@ export const Button = forwardRef(
     const tree = useEditorStore((state) => state.tree);
     const setTree = useEditorStore((state) => state.setTree);
     const setIsResizing = useEditorStore((state) => state.setIsResizing);
+    const gridSize = useEditorStore((state) => state.gridSize);
     const { children, loading, style, ...componentProps } =
       component.props as any;
 
@@ -60,13 +61,13 @@ export const Button = forwardRef(
         top={`${styles?.top}px`}
         left={`${styles?.left}px`}
         component={ResizableBox}
-        height={componentProps?.gridY * GRID_SIZE_Y}
-        width={componentProps?.gridX * GRID_SIZE_X}
+        height={componentProps?.gridY * gridSize.y}
+        width={componentProps?.gridX * gridSize.x}
         style={{
           position: "absolute",
           padding: 0,
         }}
-        draggableOpts={{ grid: [GRID_SIZE_X, GRID_SIZE_Y] }}
+        draggableOpts={{ grid: [gridSize.x, gridSize.y] }}
         resizeHandles={["s", "e"]}
         handle={<ResizeHandle />}
         onResizeStart={() => {
@@ -76,14 +77,14 @@ export const Button = forwardRef(
           setIsResizing(false);
 
           if (data.handle === "e") {
-            const newGridX = Math.ceil(data.size.width / GRID_SIZE_X);
+            const newGridX = Math.ceil(data.size.width / gridSize.x);
             const treeCopy = cloneDeep(tree);
             updateTreeComponentProps(treeCopy, component.id!, {
               gridX: newGridX,
             });
             setTree(treeCopy);
           } else if (data.handle === "s") {
-            const newGridY = Math.floor(data.size.height / GRID_SIZE_Y);
+            const newGridY = Math.floor(data.size.height / gridSize.y);
             const treeCopy = cloneDeep(tree);
             updateTreeComponentProps(treeCopy, component.id!, {
               gridY: newGridY,

@@ -1,4 +1,4 @@
-import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
+import { useEditorStore } from "@/stores/editor";
 import { checkIfIsChildDeep, getComponentById } from "@/utils/editor";
 import { useCallback, useState } from "react";
 
@@ -40,7 +40,7 @@ export const useDroppable = ({
   );
   const tree = useEditorStore((state) => state.tree);
   const setIsDragging = useEditorStore((state) => state.setIsDragging);
-  const componentToAdd = useEditorStore((state) => state.componentToAdd);
+  const gridSize = useEditorStore((state) => state.gridSize);
   const setPreviewPosition = useEditorStore(
     (state) => state.setPreviewPosition
   );
@@ -106,8 +106,8 @@ export const useDroppable = ({
 
       const comp = getComponentById(tree, id);
       if (comp?.id === "root") {
-        const gridX = GRID_SIZE_X;
-        const gridY = GRID_SIZE_Y;
+        const gridX = gridSize.x;
+        const gridY = gridSize.y;
 
         const xPos = Math.floor(leftDist / gridX);
         const yPos = Math.floor(topDist / gridY);
@@ -119,7 +119,7 @@ export const useDroppable = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, currentWindow, tree]
+    [id, currentWindow, tree, gridSize]
   );
 
   const handleDragEnter = useCallback(

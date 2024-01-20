@@ -20,12 +20,19 @@ type EditorState = {
     top: number;
     left: number;
   }) => void;
+  gridSize: { x: number; y: number };
+  setGridSize: (girdSize: { x: number; y: number }) => void;
 };
 
-export const GRID_SIZE_Y = 10;
-export const GRID_SIZE_X = 80;
+export const DEFAULT_GRID_SIZE_X = 80;
+export const DEFAULT_GRID_SIZE_Y = 10;
 
 export const useEditorStore = create<EditorState>((set) => ({
+  gridSize: {
+    x: DEFAULT_GRID_SIZE_X,
+    y: DEFAULT_GRID_SIZE_Y,
+  },
+  setGridSize: (gridSize) => set({ gridSize }),
   tree: {
     id: "root",
     type: "Container",
@@ -48,13 +55,13 @@ export const useEditorStore = create<EditorState>((set) => ({
               height: "calc(100vh - 200px)",
               backgroundImage: `
                 repeating-linear-gradient( 
-                  0deg, transparent, transparent calc(${GRID_SIZE_Y}px - 1px), 
-                  #ddd calc(${GRID_SIZE_Y}px - 1px), 
-                  #ddd ${GRID_SIZE_Y}px ),
+                  0deg, transparent, transparent calc(${DEFAULT_GRID_SIZE_Y}px - 1px), 
+                  #ddd calc(${DEFAULT_GRID_SIZE_Y}px - 1px), 
+                  #ddd ${DEFAULT_GRID_SIZE_Y}px ),
                 repeating-linear-gradient( 
-                  -90deg, transparent, transparent calc(${GRID_SIZE_X}px - 1px), 
-                  #ddd calc(${GRID_SIZE_X}px - 1px), #ddd ${GRID_SIZE_X}px )`,
-              backgroundSize: `${GRID_SIZE_X}px ${GRID_SIZE_Y}px`,
+                  -90deg, transparent, transparent calc(${DEFAULT_GRID_SIZE_X}px - 1px), 
+                  #ddd calc(${DEFAULT_GRID_SIZE_X}px - 1px), #ddd ${DEFAULT_GRID_SIZE_X}px )`,
+              backgroundSize: `${DEFAULT_GRID_SIZE_X}px ${DEFAULT_GRID_SIZE_Y}px`,
               zIndex: 0,
               pointerEvents: "none",
             },

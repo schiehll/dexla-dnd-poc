@@ -6,12 +6,16 @@ import {
 } from "@/utils/editor";
 import { Droppable } from "@/components/Droppable";
 import { DroppableDraggable } from "@/components/DroppableDraggable";
-import { Box, Paper } from "@mantine/core";
+import { Box, Paper, useMantineTheme } from "@mantine/core";
 import { componentMapper } from "@/utils/componentMapper";
-import { GRID_SIZE_X, GRID_SIZE_Y, useEditorStore } from "@/stores/editor";
-import { useHotkeys } from "@mantine/hooks";
+import {
+  DEFAULT_GRID_SIZE_X,
+  DEFAULT_GRID_SIZE_Y,
+  useEditorStore,
+} from "@/stores/editor";
+import { useHotkeys, useMediaQuery } from "@mantine/hooks";
 import cloneDeep from "lodash.clonedeep";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 export const Editor = () => {
   const tree = useEditorStore((state) => state.tree);
@@ -20,6 +24,29 @@ export const Editor = () => {
   const setSelectedId = useEditorStore((state) => state.setSelectedId);
   const previewPosition = useEditorStore((state) => state.previewPosition);
   const componentToAdd = useEditorStore((state) => state.componentToAdd);
+  const gridSize = useEditorStore((state) => state.gridSize);
+  const setGridSize = useEditorStore((state) => state.setGridSize);
+  const theme = useMantineTheme();
+  const isSmallerThanLg = useMediaQuery(
+    theme.fn.smallerThan("lg").replace("@media ", "")
+  );
+  const isSmallerThanSm = useMediaQuery(
+    theme.fn.smallerThan("sm").replace("@media ", "")
+  );
+  const isLargerThanLg = useMediaQuery(
+    theme.fn.largerThan("lg").replace("@media ", "")
+  );
+
+  useEffect(() => {
+    // Change the grid values here for each screen size to match the wanted new grid size and all grid components will resize
+    if (isSmallerThanSm) {
+      setGridSize({ x: DEFAULT_GRID_SIZE_X - 40, y: DEFAULT_GRID_SIZE_Y - 8 });
+    } else if (isSmallerThanLg) {
+      setGridSize({ x: DEFAULT_GRID_SIZE_X - 20, y: DEFAULT_GRID_SIZE_Y - 5 });
+    } else if (isLargerThanLg) {
+      setGridSize({ x: DEFAULT_GRID_SIZE_X, y: DEFAULT_GRID_SIZE_Y });
+    }
+  }, [isSmallerThanLg, isSmallerThanSm, isLargerThanLg, setGridSize]);
 
   const deleteComponent = useCallback(() => {
     if (selectedComponentId) {
@@ -105,8 +132,8 @@ export const Editor = () => {
       {renderTree(tree)}
       {previewPosition && comp && (
         <Box
-          w={`${comp.props?.gridX * GRID_SIZE_X}px`}
-          h={`${comp.props?.gridY * GRID_SIZE_Y}px`}
+          w={`${comp.props?.gridX * gridSize.x}px`}
+          h={`${comp.props?.gridY * gridSize.y}px`}
           bg="blue"
           pos="absolute"
           top={`${previewPosition.top}px`}
